@@ -1,0 +1,4 @@
+.haxelib/
+.haxelsp/recording/
+dump/
+export/
