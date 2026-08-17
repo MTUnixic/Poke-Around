@@ -1,6 +1,5 @@
 package ds;
 
-import backend.Logging;
 import flixel.FlxG;
 
 //pools unique items together. Technically a set but called it Pool because I made it let you randomly pool items from it.
