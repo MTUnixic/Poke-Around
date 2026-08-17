@@ -3,6 +3,7 @@ package;
 import backend.CardManager;
 import backend.Logging;
 import flixel.FlxGame;
+import menus.MainMenu;
 import openfl.display.Sprite;
 
 class Main extends Sprite
@@ -10,7 +11,7 @@ class Main extends Sprite
 	public function new()
 	{
 		super();
-		addChild(new FlxGame(0, 0, PlayState));
+		addChild(new FlxGame(0, 0, MainMenu));
     inline function check(vals:Array<CardData>) {
       return CardManager.formatCombo(CardManager.checkCombos(vals));
     }
