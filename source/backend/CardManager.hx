@@ -21,6 +21,39 @@ class CardManager
 
 	public static var cards:Array<CardData> = [];
 
+	// every way to choose 5 indices out of 7, used by bestHandOf7
+	static var sevenChooseFive:Array<Array<Int>> = {
+		var combos:Array<Array<Int>> = [];
+		for (a in 0...7)
+			for (b in (a + 1)...7)
+				for (c in (b + 1)...7)
+					for (d in (c + 1)...7)
+						for (e in (d + 1)...7)
+							combos.push([a, b, c, d, e]);
+		combos;
+	}
+
+	public static function freshShuffledDeck():Array<CardData>
+	{
+		return cardPool.getMultiple(52, true, false);
+	}
+
+	// best 5-card hand out of exactly 7 cards (e.g. 2 hole + 5 community)
+	public static function bestHandOf7(cards:Array<CardData>)
+	{
+		var best = {rank: -1, num1: -1, num2: -1};
+		for (combo in sevenChooseFive)
+		{
+			var hand = [for (i in combo) cards[i]];
+			var result = checkCombos(hand);
+			if (result.rank > best.rank
+				|| (result.rank == best.rank && result.num1 > best.num1)
+				|| (result.rank == best.rank && result.num1 == best.num1 && result.num2 > best.num2))
+				best = result;
+		}
+		return best;
+	}
+
 	public static function formatCombo(c:{rank:Int, num1:Int, num2:Int})
 	{
 		return switch (c.rank)
@@ -82,15 +115,16 @@ class CardManager
 						result.num2 = num;
 					}
 				case 3:
-					if (result.rank == 1) // fullhouse
+					if (result.rank == 1) // upgrade existing pair to a full house
+					{
+						result.rank = 6;
+						result.num2 = result.num1; // previous pair becomes the "pair" part
+						result.num1 = num; // new triple becomes the "trips" part
+					}
+					else if (result.rank < 3) // three of a kind (no pair recorded yet)
 					{
 						result.rank = 3;
 						result.num1 = num;
-					}
-					else if (result.rank < 3) // three
-					{
-						result.rank = 6;
-						result.num2 = num;
 					}
 				case 4:
 					if (result.rank < 7)
