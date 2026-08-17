@@ -1,15 +1,15 @@
 package backend;
 
-import flixel.tweens.FlxTween;
-import flixel.text.FlxText;
-import flixel.FlxSprite;
-import flixel.util.FlxColor;
 import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.group.FlxContainer;
 import flixel.group.FlxGroup;
+import flixel.text.FlxText;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import haxe.Exception;
 import haxe.Log;
 import haxe.PosInfos;
-import flixel.group.FlxContainer;
 
 private class FeyLogMessage extends FlxContainer {
 	public var x(default, set):Float = 0;
@@ -51,10 +51,12 @@ private class FeyLogMessage extends FlxContainer {
 		text = new FlxText(0, 0, title.textField.textWidth * 2, message, 12);
 		body = new FlxSprite().makeGraphic(Std.int(text.width) + 60, Std.int(text.textField.textHeight) + 50, color);
 		flair = new FlxSprite().makeGraphic(10, Std.int(body.height), detail);
+    #if FLX_DEBUG
     title.ignoreDrawDebug = true;
     text.ignoreDrawDebug = true;
     flair.ignoreDrawDebug = true;
     body.ignoreDrawDebug = true;
+    #end
 		add(body);
 		add(flair);
 		add(title);

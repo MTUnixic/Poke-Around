@@ -8,9 +8,11 @@ class Card extends FlxThreeSprite
 {
 	public var data:CardData;
 
-	public function new()
+	public function new(?data:CardData)
 	{
 		super();
+
+    this.data = data;
 
 		loadGraphic("assets/images/cards/card-back.png", true, 88, 124);
 		animation.add("back-a", [0]);
@@ -23,7 +25,7 @@ class Card extends FlxThreeSprite
 
 	public function reveal(?data:CardData, animate:Bool = true)
 	{
-		this.data = this.data ?? data;
+		this.data = data ?? this.data;
 
 		if (animate)
 		{
