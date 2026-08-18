@@ -1,4 +1,4 @@
-package backend;
+package util;
 
 import ds.Pool;
 
@@ -8,7 +8,7 @@ typedef CardData =
 	suit:Int,
 }
 
-class CardManager
+class CardUtil
 {
 	static var cardPool:Pool<CardData> =
 		{
@@ -33,10 +33,8 @@ class CardManager
 		combos;
 	}
 
-	public static function freshShuffledDeck():Array<CardData>
-	{
+	public static inline function freshShuffledDeck():Array<CardData>
 		return cardPool.getMultiple(52, true, false);
-	}
 
 	// best 5-card hand out of exactly 7 cards (e.g. 2 hole + 5 community)
 	public static function bestHandOf7(cards:Array<CardData>)
@@ -54,32 +52,20 @@ class CardManager
 		return best;
 	}
 
-	public static function formatCombo(c:{rank:Int, num1:Int, num2:Int})
-	{
+	public static inline function formatCombo(c:{rank:Int, num1:Int, num2:Int})
 		return switch (c.rank)
 		{
-			default:
-				'High Card ${c.num1}';
-			case 1:
-				'Pair ${c.num1}';
-			case 2:
-				'Two Pair ${c.num1},${c.num2}';
-			case 3:
-				'Three of a Kind ${c.num1}';
-			case 4:
-				'Straight ${c.num1}';
-			case 5:
-				'Flush';
-			case 6:
-				'Full House ${c.num1},${c.num2}';
-			case 7:
-				'Four of a Kind ${c.num1}';
-			case 8:
-				'Straight Flush ${c.num1}';
-			case 9:
-				'Royal Flush';
+			default: 'High Card ${c.num1}';
+			case 1: 'Pair ${c.num1}';
+			case 2: 'Two Pair ${c.num1},${c.num2}';
+			case 3: 'Three of a Kind ${c.num1}';
+			case 4: 'Straight ${c.num1}';
+			case 5: 'Flush';
+			case 6: 'Full House ${c.num1},${c.num2}';
+			case 7: 'Four of a Kind ${c.num1}';
+			case 8: 'Straight Flush ${c.num1}';
+			case 9: 'Royal Flush';
 		}
-	}
 
 	public static function checkCombos(cards:Array<CardData>)
 	{
@@ -132,7 +118,7 @@ class CardManager
 						result.rank = 7;
 						result.num1 = num;
 					}
-				default://any hand with 5 equal cards or more is just higher than everything, fuck it
+				default: // any hand with 5 equal cards or more is just higher than everything, fuck it
 					var rank = 9 + (frequency - 4);
 					if (result.rank < rank)
 					{

@@ -1,11 +1,11 @@
-package;
+package util;
 
 import backend.Controls;
+import backend.Controls;
 import backend.Logging;
-import backend.Paths;
+import backend.Logging;
 import flixel.FlxCamera;
 import flixel.FlxG;
-import flixel.FlxGame;
 import flixel.FlxState;
 import flixel.group.FlxContainer;
 

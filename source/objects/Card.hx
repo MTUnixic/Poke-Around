@@ -1,8 +1,9 @@
 package objects;
 
-import backend.CardManager.CardData;
+import backend.flixel.FlxThreeSprite;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import util.CardUtil.CardData;
 
 class Card extends FlxThreeSprite
 {
@@ -12,7 +13,7 @@ class Card extends FlxThreeSprite
 	{
 		super();
 
-    this.data = data;
+    	this.data = data;
 
 		loadGraphic("assets/images/cards/card-back.png", true, 88, 124);
 		animation.add("back-a", [0]);
@@ -27,17 +28,16 @@ class Card extends FlxThreeSprite
 	{
 		this.data = data ?? this.data;
 
-		if (animate)
-		{
-			FlxTween.tween(this, { angleY: 90 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween)
-			{
-				loadSuitSprite(this.data);
-				this.angleY = -90;
-				FlxTween.tween(this, { angleY: 0 }, 0.5, { ease: FlxEase.quadOut });
-			}});
-		}
-		else 
+		if (!animate) {
 			loadSuitSprite(this.data);
+			return;
+		}
+
+		FlxTween.tween(this, { angleY: 90 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
+			loadSuitSprite(this.data);
+			this.angleY = -90;
+			FlxTween.tween(this, { angleY: 0 }, 0.5, { ease: FlxEase.quadOut });
+		}});
 	}
 
 	function loadSuitSprite(data:CardData)

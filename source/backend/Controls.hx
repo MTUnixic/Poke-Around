@@ -106,7 +106,7 @@ class Controls
 	public static var justReleased:InputListChecker;
 
 	@:allow(Feyworks)
-	static function init()
+	public static function init()
 	{
 		pressed = FlxG.keys.pressed;
 		justPressed = FlxG.keys.justPressed;

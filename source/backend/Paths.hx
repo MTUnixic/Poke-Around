@@ -1,20 +1,20 @@
 package backend;
-#if FEY_PATHS
 
+#if FEY_PATHS
 import backend.Logging;
 import sys.FileSystem;
 
 using StringTools;
+
 #if FEY_FILESYS
 import backend.FileSys;
 #end
-
 #if FEY_MODDING
 import backend.Mod;
 #end
 
-
-private typedef PathAlias = {
+private typedef PathAlias =
+{
 	#if FEY_MODDING
 	?modpath:String,
 	#end
@@ -38,7 +38,8 @@ private typedef PathAlias = {
 
 	Disable class via haxedef `FEY_NO_PATHS`.
 **/
-class Paths {
+class Paths
+{
 	static var aliases:Map<String, PathAlias> = [
 		#if FEY_DEFAULT_PATHS
 		'images' => {
@@ -82,8 +83,10 @@ class Paths {
 	public static function register(name:String, path:String, defaultExtension:String, ?modPath:String)
 		aliases.set(name, {path: path, modpath: modPath, defaultExtension: defaultExtension});
 
-	static function getFromMods(alias:PathAlias, file:String, ?extension:String) {
-		for (mod in Mod.modList) {
+	static function getFromMods(alias:PathAlias, file:String, ?extension:String)
+	{
+		for (mod in Mod.modList)
+		{
 			var modpath = resolveMod(alias, mod, file, extension);
 			if (FileSystem.exists(modpath))
 				return modpath;
@@ -91,7 +94,8 @@ class Paths {
 		return '';
 	}
 
-	public static function get(name:String, file:String, ?extension:String, useMods:Bool = true) {
+	public static function get(name:String, file:String, ?extension:String, useMods:Bool = true)
+	{
 		var alias = (aliases.get(name) ?? {Logging.warn('Invalid path alias $name'); {path: '?#', defaultExtension: ''};});
 		if (useMods)
 			return getFromMods(alias, file, extension);
@@ -104,7 +108,8 @@ class Paths {
 	public static function register(name:String, path:String, defaultExtension:String)
 		aliases.set(name, {path: path, defaultExtension: defaultExtension});
 
-	public static function get(name:String, file:String, ?extension:String) {
+	public static function get(name:String, file:String, ?extension:String)
+	{
 		return resolve(aliases.get(name) ?? {Logging.warn('Invalid path alias $name'); {path: '?#', defaultExtension: ''};}, file, extension);
 	}
 

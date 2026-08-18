@@ -1,4 +1,4 @@
-package objects;
+package backend.flixel;
 
 import flixel.FlxStrip;
 import flixel.graphics.tile.FlxDrawTrianglesItem;
@@ -86,13 +86,14 @@ class FlxThreeSprite extends FlxStrip
 		]);
 	}
 
-	//TODO: Add all other graphic manipulation functions like makeGraphic
+	// TODO: Add all other graphic manipulation functions like makeGraphic
 	override public function loadGraphic(graphic:FlxGraphicAsset, animated = false, frameWidth = 0, frameHeight = 0, unique = false, ?key:String):FlxThreeSprite
 	{
 		super.loadGraphic(graphic, animated, frameWidth, frameHeight, unique, key);
 		updateMesh();
 		return this;
 	}
+	
 	override public function setGraphicSize(width = 0.0, height = 0.0)
 	{
 		super.setGraphicSize(width, height);
@@ -171,7 +172,7 @@ class FlxThreeSprite extends FlxStrip
 			if (!camera.visible || !camera.exists)
 				continue;
 
-			getScreenPosition(_point, camera).subtractPoint(offset);
+			getScreenPosition(_point, camera).subtract(offset);
 			_point.add(origin.x, origin.y);
 			
 			#if !flash
