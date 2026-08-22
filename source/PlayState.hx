@@ -8,6 +8,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.ui.FlxButton;
 import flixel.util.FlxTimer;
+import menus.PauseMenu;
 import objects.Briefcase;
 import objects.Card;
 import objects.Table.PlayerAction;
@@ -16,7 +17,7 @@ import objects.Table.ShowdownResult;
 import objects.Table;
 import util.CardUtil.CardData;
 
-class PlayState extends FlxState
+class PlayState extends CoolBG
 {
 	static inline var POT_X = 596.0;
 	static inline var POT_Y = 260.0;
@@ -43,6 +44,7 @@ class PlayState extends FlxState
 	var briefcase:Briefcase;
 
 	var pendingRaiseBB:Int = 1;
+	var pauseButton:FlxSprite;
 
 	override public function create()
 	{
@@ -125,6 +127,11 @@ class PlayState extends FlxState
 		table.onHandOver = onHandOver;
 
 		table.startHand();
+
+		pauseButton = new FlxSprite(0, 0,
+			'assets/images/placeholderpause.png'); // TODO: MT can you please draw it if you want to ofc but leave the old one it in incase someone snoops in files
+		pauseButton.x = FlxG.width - pauseButton.width;
+		add(pauseButton);
 	}
 
 	var lastBriefcaseHover:Bool = false;
@@ -150,6 +157,8 @@ class PlayState extends FlxState
 			}
 		}
 		super.update(elapsed);
+		if (FlxG.mouse.overlaps(pauseButton) && FlxG.mouse.justPressed) // pausing
+			openSubState(new PauseMenu());
 	}
 
 	function onDeal()
