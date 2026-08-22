@@ -12,7 +12,7 @@ class Main extends Sprite
 	{
 		super();
 
-		addChild(new FlxGame(0, 0, CoolBG));
+		addChild(new FlxGame(0, 0, MainMenu));
 
     inline function check(vals:Array<CardData>) {
       return CardUtil.formatCombo(CardUtil.checkCombos(vals));

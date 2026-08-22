@@ -21,12 +21,12 @@ class PauseMenu extends FlxSubState
 		menu = new MenuUtil(['Resume', 'Restart', 'Exit To Menu', 'Close Game'], 0xEEFF00);
 		
 		bg = new FlxSprite(0, 0);
-		bg.makeGraphic(1, 1, 0x94242424);
+		bg.makeGraphic(1, 1, 0x94000000);
 		bg.setGraphicSize(1280, 720);
 		bg.screenCenter();
 		bg.alpha = 0;
 
-		FlxTween.tween(bg, {alpha: 1}, 0.3);
+		FlxTween.tween(bg, {alpha: 0.8}, 0.3);
 
 		buttonGroup = new FlxTypedGroup<FlxText>();
 		menu.makeButtonGroup(buttonGroup);

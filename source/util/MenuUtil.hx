@@ -37,7 +37,7 @@ class MenuUtil
 			button.size = 20;
 			button.color = buttonColor;
 			button.screenCenter();
-			button.y += button.height * buttonGroup.length * 1.25 - 50;
+			button.y += button.height * buttonGroup.length * 1.25 + 10;
 			buttonGroup.add(button);
 		}
     }

@@ -7,10 +7,11 @@ import flixel.addons.display.FlxBackdrop;
 class CoolBG extends FlxState
 {
     var glow:FlxSprite;
+    var frame:FlxSprite;
 
     var diam:FlxBackdrop;
     var squa:FlxBackdrop;
-
+    
     override function create() {
         super.create();
 
@@ -29,7 +30,7 @@ class CoolBG extends FlxState
         squa.alpha = scratchGhost2Flixel(95);
         add(squa);
 
-        final frame = new FlxSprite();
+        frame = new FlxSprite();
         frame.loadGraphic('assets/images/coolbg/pokuhbgframe.png');
         add(frame);
 
