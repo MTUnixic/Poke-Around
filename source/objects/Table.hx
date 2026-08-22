@@ -1,12 +1,6 @@
 package objects;
 
-import flixel.FlxG;
-import flixel.group.FlxContainer;
-import flixel.text.FlxText;
-import flixel.tweens.FlxTween;
-import flixel.ui.FlxButton;
 import flixel.util.FlxTimer;
-import objects.Card;
 import util.CardUtil;
 
 enum Street
@@ -48,107 +42,57 @@ typedef ShowdownResult =
 	winnings:Int,
 }
 
-class Table extends FlxContainer
+enum PlayerKind
 {
-    static inline var SMALL_BLIND = 10;
-	static inline var BIG_BLIND = 20;
-	static inline var STARTING_CHIPS = 1000;
+	Local;
+	Bot;
+	Opponent;
+}
 
-	static inline var POT_X = 596.0;
-	static inline var POT_Y = 260.0;
-	static inline var HOLE_Y = 520.0;
-	static inline var COMMUNITY_Y = 260.0;
+/**
+ * Owns the poker game state and rules (players, deck, betting, streets, showdown).
+ * Knows nothing about rendering or input widgets; callers drive it via `handleAction()`
+ * and observe state changes through the `on*` hooks below.
+ */
+class Table
+{
+	public static inline var SMALL_BLIND = 10;
+	public static inline var BIG_BLIND = 20;
+	public static inline var STARTING_CHIPS = 1000;
 
-	var players:Array<PokerPlayer> = [];
-	var community:Array<CardData> = [];
-	var pot:Int = 0;
-	var currentBet:Int = 0;
-	var dealerSeat:Int = 3;
-	var turnSeat:Int = -1;
-	var street:Street = Waiting;
+	public var players(default, null):Array<PokerPlayer> = [];
+	public var localSeat(default, null):Int = 0;
+	public var community(default, null):Array<CardData> = [];
+	public var pot(default, null):Int = 0;
+	public var currentBet(default, null):Int = 0;
+	public var dealerSeat(default, null):Int = 0;
+	public var turnSeat(default, null):Int = -1;
+	public var street(default, null):Street = Waiting;
 
 	var deck:Array<CardData> = [];
 	var actedThisRound:Array<Bool> = [false, false, false, false];
 
-	var holeCardSprites:Array<Card> = [];
-	var communityCardSprites:Array<Card> = [];
+	public dynamic function onDeal():Void {}
+	public dynamic function onCommunityCard(data:CardData, index:Int):Void {}
+	public dynamic function onPotChanged():Void {}
+	public dynamic function onTurnChanged(seat:Int):Void {}
+	public dynamic function onPlayerActed(seat:Int, action:PlayerAction):Void {}
+	public dynamic function onShowdown(results:Array<ShowdownResult>):Void {}
+	public dynamic function onHandOver():Void {}
 
-	var potText:FlxText;
-	var chipsText:FlxText;
-	var streetText:FlxText;
+	public function new() {}
 
-	var foldBtn:FlxButton;
-	var checkCallBtn:FlxButton;
-	var raiseMinusBtn:FlxButton;
-	var raisePlusBtn:FlxButton;
-	var raiseAmountText:FlxText;
-	var raiseConfirmBtn:FlxButton;
+	public function addPlayer(name:String, playerKind:PlayerKind = Bot):Int
+	{
+		var seat = players.length;
+		players.push({name: name, isBot: playerKind.match(Bot), chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false});
+		if (playerKind.match(Local))
+			localSeat = seat;
+		dealerSeat = seat;
+		return seat;
+	}
 
-	var pendingRaiseBB:Int = 1;
-    
-    public function new()
-    {
-        super();
-
-        potText = new FlxText(POT_X - 60, POT_Y + 130, 200, "Pot: 0", 20);
-		add(potText);
-
-		chipsText = new FlxText(20, HOLE_Y + 10, 300, "Chips: 0", 20);
-		add(chipsText);
-
-		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
-		add(streetText);
-
-		foldBtn = new FlxButton(300, 650, "Fold", () -> {
-			disableActionButtons();
-			handleAction(0, Fold);
-		});
-		add(foldBtn);
-
-		checkCallBtn = new FlxButton(420, 650, "Check", () -> {
-			disableActionButtons();
-			var action = (currentBet - players[0].currentBet) > 0 ? Call : Check;
-			handleAction(0, action);
-		});
-		add(checkCallBtn);
-
-		raiseMinusBtn = new FlxButton(600, 650, "-", () -> {
-			if (pendingRaiseBB > 1)
-				pendingRaiseBB--;
-			updateRaiseAmountText();
-		});
-		add(raiseMinusBtn);
-
-		raiseAmountText = new FlxText(650, 655, 160, "0", 16);
-		raiseAmountText.alignment = CENTER;
-		add(raiseAmountText);
-
-		raisePlusBtn = new FlxButton(810, 650, "+", () -> {
-			pendingRaiseBB++;
-			updateRaiseAmountText();
-		});
-		add(raisePlusBtn);
-
-		raiseConfirmBtn = new FlxButton(900, 650, "Bet/Raise", () -> {
-			disableActionButtons();
-			var target = currentBet + pendingRaiseBB * BIG_BLIND;
-			var action = currentBet > 0 ? Raise(target) : Bet(target);
-			handleAction(0, action);
-		});
-		add(raiseConfirmBtn);
-
-		players = [
-			{name: "You", isBot: false, chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false},
-			{name: "Bot 1", isBot: true, chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false},
-			{name: "Bot 2", isBot: true, chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false},
-			{name: "Bot 3", isBot: true, chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false},
-		];
-
-		disableActionButtons();
-		startHand();
-    }
-
-    function playersWithChips():Int
+	public function playersWithChips():Int
 	{
 		var n = 0;
 		for (p in players)
@@ -157,7 +101,7 @@ class Table extends FlxContainer
 		return n;
 	}
 
-	function startHand()
+	public function startHand()
 	{
 		community = [];
 		pot = 0;
@@ -180,6 +124,7 @@ class Table extends FlxContainer
 			if (!p.folded)
 				p.holeCards = [deck.pop(), deck.pop()];
 
+		trace('New hand. Dealer seat $dealerSeat.');
 		onDeal();
 
 		var sbSeat = nextOccupiedSeat(dealerSeat);
@@ -188,20 +133,17 @@ class Table extends FlxContainer
 		postBet(bbSeat, BIG_BLIND);
 		currentBet = BIG_BLIND;
 
-		for (i in 0...4)
+		for (i in 0...players.length)
 			actedThisRound[i] = false;
 
 		var next = nextToActSeat(bbSeat);
 		if (next == -1)
 			advanceStreet();
 		else
-		{
-			turnSeat = next;
-			onTurnChanged(turnSeat);
-		}
+			setTurn(next);
 	}
 
-	function handleAction(seat:Int, action:PlayerAction):Bool
+	public function handleAction(seat:Int, action:PlayerAction):Bool
 	{
 		if (seat != turnSeat)
 			return false;
@@ -213,8 +155,6 @@ class Table extends FlxContainer
 		{
 			case Fold:
 				p.folded = true;
-				if (seat == 0)
-					killHoleCards();
 
 			case Check:
 				if (p.currentBet != currentBet)
@@ -234,15 +174,28 @@ class Table extends FlxContainer
 				toPut = Std.int(Math.min(toPut, p.chips));
 				postBet(seat, toPut);
 				currentBet = p.currentBet;
-				for (i in 0...4)
+				for (i in 0...players.length)
 					actedThisRound[i] = false;
 		}
 
 		actedThisRound[seat] = true;
+		trace('${p.name} -> ${actionLabel(action)} | bet=${p.currentBet} chips=${p.chips} pot=$pot');
 		onPlayerActed(seat, action);
 
 		advanceTurn();
 		return true;
+	}
+
+	public static function actionLabel(action:PlayerAction):String
+	{
+		return switch (action)
+		{
+			case Fold: "fold";
+			case Check: "check";
+			case Call: "call";
+			case Bet(target): 'bet to $target';
+			case Raise(target): 'raise to $target';
+		}
 	}
 
 	function botDecideAction(seat:Int):PlayerAction
@@ -292,9 +245,9 @@ class Table extends FlxContainer
 	{
 		var seat = from;
 
-		for (i in 0...4)
+		for (i in 0...players.length)
 		{
-			seat = (seat + 1) % 4;
+			seat = (seat + 1) % players.length;
 			if (!players[seat].isOut)
 				return seat;
 		}
@@ -306,9 +259,9 @@ class Table extends FlxContainer
 	{
 		var seat = from;
 
-		for (i in 0...4)
+		for (i in 0...players.length)
 		{
-			seat = (seat + 1) % 4;
+			seat = (seat + 1) % players.length;
 			var p = players[seat];
 			if (!p.isOut && !p.folded && !p.isAllIn)
 				return seat;
@@ -319,7 +272,7 @@ class Table extends FlxContainer
 
 	function allSettled():Bool
 	{
-		for (i in 0...4)
+		for (i in 0...players.length)
 		{
 			var p = players[i];
 			if (p.folded || p.isAllIn)
@@ -329,6 +282,15 @@ class Table extends FlxContainer
 		}
 
 		return true;
+	}
+
+	function setTurn(seat:Int)
+	{
+		turnSeat = seat;
+		onTurnChanged(seat);
+
+		if (players[seat].isBot)
+			new FlxTimer().start(0.6, (_) -> handleAction(seat, botDecideAction(seat)));
 	}
 
 	function advanceTurn()
@@ -344,13 +306,12 @@ class Table extends FlxContainer
 		if (next == -1)
 			return advanceStreet();
 
-		turnSeat = next;
-		onTurnChanged(turnSeat);
+		setTurn(next);
 	}
 
 	function advanceStreet()
 	{
-		for (i in 0...4)
+		for (i in 0...players.length)
 			actedThisRound[i] = false;
 
 		currentBet = 0;
@@ -389,14 +350,13 @@ class Table extends FlxContainer
 		if (next == -1)
 			return advanceStreet();
 
-		turnSeat = next;
-		onTurnChanged(turnSeat);
+		setTurn(next);
 	}
 
 	function awardPotToRemaining()
 	{
 		var winnerSeat = -1;
-		for (i in 0...4)
+		for (i in 0...players.length)
 			if (!players[i].folded)
 			{
 				winnerSeat = i;
@@ -422,7 +382,7 @@ class Table extends FlxContainer
 
 	function runShowdown()
 	{
-		var contenders = [for (i in 0...4) if (!players[i].folded) i];
+		var contenders = [for (i in 0...players.length) if (!players[i].folded) i];
 		var results = [
 			for (seat in contenders)
 				{seat: seat, rank: CardUtil.bestHandOf7(players[seat].holeCards.concat(community))}
@@ -460,162 +420,5 @@ class Table extends FlxContainer
 		pot = 0;
 		onShowdown(showdownResults);
 		onHandOver();
-	}
-
-	function onDeal()
-	{
-		killHoleCards();
-		killCommunityCards();
-
-		var human = players[0];
-
-		for (i in 0...human.holeCards.length)
-		{
-			var card = new Card();
-			card.x = POT_X;
-			card.y = POT_Y;
-			add(card);
-			holeCardSprites.push(card);
-
-			var data = human.holeCards[i];
-			card.x = 560 + (i * 100);
-			card.y = HOLE_Y;
-			card.reveal(data, true);
-		}
-
-		streetText.text = 'Street: $street';
-		trace('New hand. Dealer seat $dealerSeat.');
-		refreshChipsText();
-	}
-
-	function onCommunityCard(data:CardData, index:Int)
-	{
-		var card = new Card();
-		card.x = POT_X;
-		card.y = POT_Y;
-		add(card);
-		communityCardSprites.push(card);
-
-		card.x = 396.0 + index * 100;
-		card.y = COMMUNITY_Y;
-		card.reveal(data, true);
-		//FlxTween.tween(card, {x: 396.0 + index * 100, y: COMMUNITY_Y}, 0.35, {onComplete: (_) -> card.reveal(data, true)});
-
-		streetText.text = 'Street: $street';
-	}
-
-	function onPotChanged()
-	{
-		potText.text = 'Pot: $pot';
-		refreshChipsText();
-	}
-
-	function onTurnChanged(seat:Int)
-	{
-		var p = players[seat];
-		if (p.isBot)
-		{
-			disableActionButtons();
-			new FlxTimer().start(0.6, (_) -> handleAction(seat, botDecideAction(seat)));
-		}
-		else
-			enableHumanActionButtons();
-	}
-
-	function onPlayerActed(seat:Int, action:PlayerAction)
-	{
-		var p = players[seat];
-		trace('${p.name} -> ${actionLabel(action)} | bet=${p.currentBet} chips=${p.chips} pot=$pot');
-		refreshChipsText();
-	}
-
-	function actionLabel(action:PlayerAction):String
-	{
-		return switch (action)
-		{
-			case Fold: "fold";
-			case Check: "check";
-			case Call: "call";
-			case Bet(target): 'bet to $target';
-			case Raise(target): 'raise to $target';
-		}
-	}
-
-	function onShowdown(results:Array<ShowdownResult>)
-	{
-		disableActionButtons();
-		if (results.length == 0)
-			trace("Hand over");
-		else
-			trace([for (r in results) '${r.name} wins ${r.winnings} (${r.handText})'].join("\n"));
-	}
-
-	function onHandOver()
-	{
-		killHoleCards();
-
-		new FlxTimer().start(2.5, (_) ->
-		{
-			if (playersWithChips() < 2)
-				FlxG.resetState();
-			else
-				startHand();
-		});
-	}
-
-	function killHoleCards()
-	{
-		for (c in holeCardSprites.copy())
-		{
-			holeCardSprites.remove(c);
-			FlxTween.cancelTweensOf(c);
-			c.destroy();
-		}
-	}
-
-	function killCommunityCards()
-	{
-		for (c in communityCardSprites.copy())
-		{
-			communityCardSprites.remove(c);
-			FlxTween.cancelTweensOf(c);
-			c.destroy();
-		}
-	}
-
-	function refreshChipsText()
-	{
-		chipsText.text = 'Chips: ${players[0].chips}';
-	}
-
-	function enableHumanActionButtons()
-	{
-		var human = players[0];
-		var toCall = currentBet - human.currentBet;
-		checkCallBtn.text = toCall > 0 ? 'Call $toCall' : "Check";
-
-		pendingRaiseBB = 1;
-		updateRaiseAmountText();
-
-		foldBtn.visible = foldBtn.active = true;
-		checkCallBtn.visible = checkCallBtn.active = true;
-		raiseMinusBtn.visible = raiseMinusBtn.active = true;
-		raisePlusBtn.visible = raisePlusBtn.active = true;
-		raiseConfirmBtn.visible = raiseConfirmBtn.active = true;
-	}
-
-	function disableActionButtons()
-	{
-		foldBtn.visible = foldBtn.active = false;
-		checkCallBtn.visible = checkCallBtn.active = false;
-		raiseMinusBtn.visible = raiseMinusBtn.active = false;
-		raisePlusBtn.visible = raisePlusBtn.active = false;
-		raiseConfirmBtn.visible = raiseConfirmBtn.active = false;
-	}
-
-	function updateRaiseAmountText()
-	{
-		var target = currentBet + pendingRaiseBB * BIG_BLIND;
-		raiseAmountText.text = '$target';
 	}
 }
