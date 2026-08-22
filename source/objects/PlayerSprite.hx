@@ -98,7 +98,7 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		cancelTimer();
 		if (allIn)
 		{
-			idleTimer = 4;
+			idleTimer = 20;
 			playerSprite.animation.play("SlamAllIn");
 			postAnim("AllIn");
 			spawnHint('ALL IN WITH $$${target}!');

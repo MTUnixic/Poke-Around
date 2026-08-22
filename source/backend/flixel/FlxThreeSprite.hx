@@ -2,24 +2,66 @@ package backend.flixel;
 
 import flixel.FlxStrip;
 import flixel.graphics.tile.FlxDrawTrianglesItem;
+import flixel.math.FlxPoint;
 import flixel.system.FlxAssets.FlxGraphicAsset;
 
 inline private function deg2rad(degrees:Float):Float
 	return (degrees * Math.PI / 180);
 
+/**
+ * A `FlxStrip`-based sprite that can be rotated in 3D and rendered with real perspective.
+ *
+ * The quad is rotated around its origin using `angleX`/`angleY`/`angleZ`, then each vertex
+ * is projected using its own depth, so rotated edges foreshorten correctly instead of just
+ * scaling uniformly like an orthographic projection would.
+ */
 class FlxThreeSprite extends FlxStrip
 {
+	/**
+		Rotation in degrees around the X axis (tilts the sprite vertically).
+	**/
 	public var angleX(default, set):Float = 0;
-	public var angleY(default, set):Float = 0;
-	public var angleZ(default, set):Float = 0;
-	public var z(default, set):Float = 1;
 
-	public var _cosx:Float = Math.cos(0);
-	public var _cosy:Float = Math.cos(0);
-	public var _cosz:Float = Math.cos(0);
-	public var _sinx:Float = Math.sin(0);
-	public var _siny:Float = Math.sin(0);
-	public var _sinz:Float = Math.sin(0);
+	/**
+		Rotation in degrees around the Y axis (tilts the sprite horizontally).
+	**/
+	public var angleY(default, set):Float = 0;
+
+	/**
+		Rotation in degrees around the Z axis (rotates the sprite in-plane, like a normal 2D rotation).
+	**/
+	public var angleZ(default, set):Float = 0;
+
+	/**
+		Distance of the sprite from the camera along Z. Higher values move it closer (bigger on screen).
+	**/
+	public var z(default, set):Float = 0;
+
+	/**
+		Distance from the camera to the sprite's origin plane when `z == 0`. Lower values produce stronger perspective distortion.
+	**/
+	public var focalLength(default, set):Float = 500;
+
+	/**
+		Horizontal offset, in pixels, of the camera from the sprite's center. The sprite's own screen
+		position doesn't change, but rotation reveals perspective as if it were being viewed from the side.
+	**/
+	public var cameraOffsetX(default, set):Float = 0;
+
+	/**
+		Vertical offset, in pixels, of the camera from the sprite's center. The sprite's own screen
+		position doesn't change, but rotation reveals perspective as if it were being viewed from above/below.
+	**/
+	public var cameraOffsetY(default, set):Float = 0;
+
+	static inline var MIN_DEPTH:Float = 1;
+
+	var _cosx:Float = Math.cos(0);
+	var _cosy:Float = Math.cos(0);
+	var _cosz:Float = Math.cos(0);
+	var _sinx:Float = Math.sin(0);
+	var _siny:Float = Math.sin(0);
+	var _sinz:Float = Math.sin(0);
 
 	function set_angleX(value:Float)
 	{
@@ -48,6 +90,24 @@ class FlxThreeSprite extends FlxStrip
 	function set_z(value:Float)
 	{
 		z = value;
+		updateMesh();
+		return value;
+	}
+	function set_focalLength(value:Float)
+	{
+		focalLength = value;
+		updateMesh();
+		return value;
+	}
+	function set_cameraOffsetX(value:Float)
+	{
+		cameraOffsetX = value;
+		updateMesh();
+		return value;
+	}
+	function set_cameraOffsetY(value:Float)
+	{
+		cameraOffsetY = value;
 		updateMesh();
 		return value;
 	}
@@ -86,7 +146,6 @@ class FlxThreeSprite extends FlxStrip
 		]);
 	}
 
-	// TODO: Add all other graphic manipulation functions like makeGraphic
 	override public function loadGraphic(graphic:FlxGraphicAsset, animated = false, frameWidth = 0, frameHeight = 0, unique = false, ?key:String):FlxThreeSprite
 	{
 		super.loadGraphic(graphic, animated, frameWidth, frameHeight, unique, key);
@@ -102,6 +161,36 @@ class FlxThreeSprite extends FlxStrip
 		updateMesh();
 	}
 
+	/** Rotates a point (relative to the origin) in 3D and perspective-projects it back to 2D screen space. **/
+	private function rotateAndProject(px:Float, py:Float):FlxPoint
+	{
+		var vx = px;
+		var vy = py;
+		var vz = 0.0;
+
+		var tempY = vy * _cosx - vz * _sinx;
+		var tempZ = vy * _sinx + vz * _cosx;
+		vy = tempY;
+		vz = tempZ;
+
+		var tempX = vx * _cosy + vz * _siny;
+		tempZ = -vx * _siny + vz * _cosy;
+		vx = tempX;
+		vz = tempZ;
+
+		tempX = vx * _cosz - vy * _sinz;
+		tempY = vx * _sinz + vy * _cosz;
+		vx = tempX;
+		vy = tempY;
+
+		var depth = focalLength - z + vz;
+		if (depth < MIN_DEPTH)
+			depth = MIN_DEPTH;
+
+		var scale = focalLength / depth;
+		return FlxPoint.get(vx * scale, vy * scale);
+	}
+
 	private function updateMesh()
 	{
 		if (origin == null)
@@ -114,35 +203,21 @@ class FlxThreeSprite extends FlxStrip
 			width, height
 		];
 
+		// the camera offset point drifts under rotation same as any other vertex would; correcting
+		// by that drift is what keeps it pinned to a fixed screen position as the sprite rotates
+		var anchor = rotateAndProject(cameraOffsetX, cameraOffsetY);
+		var correctionX = cameraOffsetX - anchor.x;
+		var correctionY = cameraOffsetY - anchor.y;
+		anchor.put();
+
 		var updatedVertices:Array<Float> = [];
 
 		for (i in 0...Math.floor(verts.length / 2))
 		{
-			// shift to be relative to the origin (pivot) so rotation happens around it
-			var vx = verts[i * 2] - origin.x;
-			var vy = verts[i * 2 + 1] - origin.y;
-			var vz = 0.0;
-
-			var tempY = vy * _cosx - vz * _sinx;
-			var tempZ = vy * _sinx + vz * _cosx;
-			vy = tempY;
-			vz = tempZ;
-
-			var tempX = vx * _cosy + vz * _siny;
-			tempZ = -vx * _siny + vz * _cosy;
-			vx = tempX;
-			vz = tempZ;
-
-			tempX = vx * _cosz - vy * _sinz;
-			tempY = vx * _sinz + vy * _cosz;
-			vx = tempX;
-			vy = tempY;
-
-			vx *= 1 + (z / 100);
-			vy *= 1 + (z / 100);
-
-			updatedVertices.push(vx);
-			updatedVertices.push(vy);
+			var projected = rotateAndProject(verts[i * 2] - origin.x, verts[i * 2 + 1] - origin.y);
+			updatedVertices.push(projected.x + correctionX);
+			updatedVertices.push(projected.y + correctionY);
+			projected.put();
 		}
 
 		vertices = new DrawData(updatedVertices.length, true, updatedVertices);

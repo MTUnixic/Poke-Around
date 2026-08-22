@@ -10,7 +10,6 @@ import flixel.ui.FlxButton;
 import flixel.util.FlxTimer.FlxTimerManager;
 import flixel.util.FlxTimer;
 import menus.PauseMenu;
-import objects.Briefcase;
 import objects.Card;
 import objects.PlayerSprite;
 import objects.Table.PlayerAction;
@@ -22,10 +21,21 @@ import util.SpriteButtonUtil;
 
 class PlayState extends CoolBG
 {
-	static inline var POT_X = 596.0;
-	static inline var POT_Y = 260.0;
-	static inline var HOLE_Y = 520.0;
-	static inline var COMMUNITY_Y = 260.0;
+	static inline var ACTION_BTN_FRAME_W = 70;
+	static inline var ACTION_BTN_FRAME_H = 50;
+	static inline var ACTION_BTN_SCALE = 2.0;
+	static inline var ACTION_BTN_W = 140.0; // ACTION_BTN_FRAME_W * ACTION_BTN_SCALE
+	static inline var ACTION_BTN_H = 100.0; // ACTION_BTN_FRAME_H * ACTION_BTN_SCALE
+	static inline var ACTION_BTN_GAP = 20;
+	static inline var ACTION_ROW_MARGIN_BOTTOM = 10;
+
+	static inline var SMALL_BTN_FRAME_W = 50;
+	static inline var SMALL_BTN_FRAME_H = 50;
+	static inline var SMALL_BTN_SCALE = 0.75;
+	static inline var SMALL_BTN_W = 37.5; // SMALL_BTN_FRAME_W * SMALL_BTN_SCALE
+	static inline var SMALL_BTN_H = 37.5; // SMALL_BTN_FRAME_H * SMALL_BTN_SCALE
+	static inline var AMOUNT_TEXT_W = 80;
+	static inline var AMOUNT_TEXT_GAP = 10;
 
 	var table:Table;
 	var localPlayer:PokerPlayer;
@@ -41,20 +51,16 @@ class PlayState extends CoolBG
 	var checkCallBtn:SpriteButtonUtil;
 	var callAmountText:FlxText;
 
-	var raiseMinusBtn:FlxButton;
-	var raisePlusBtn:FlxButton;
+	var raiseMinusBtn:SpriteButtonUtil;
+	var raisePlusBtn:SpriteButtonUtil;
 	var raiseAmountText:FlxText;
 	var raiseConfirmBtn:SpriteButtonUtil;
-
-	var briefcase:Briefcase;
 
 	var pendingRaiseBB:Int = 1;
 	var pauseButton:FlxSprite;
 
 	var playerSprites:Array<PlayerSprite> = [];
 
-	// Owned by this state instead of the global manager, so bot turns and the next-hand delay stop
-	// while the pause menu is open and die with the state instead of driving an old table.
 	var timers:FlxTimerManager;
 
 	override public function create()
@@ -64,7 +70,7 @@ class PlayState extends CoolBG
 		timers = new FlxTimerManager();
 		add(timers);
 
-		potText = new FlxText(POT_X - 60, POT_Y + 130, 200, "Pot: 0", 20);
+		potText = new FlxText(590 - 60, 260 + 130, 200, "Pot: 0", 20);
 		add(potText);
 
 		chipsText = new FlxText(120, 200, 300, "Chips: 0", 20);
@@ -73,60 +79,80 @@ class PlayState extends CoolBG
 		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
 		add(streetText);
 
-		foldBtn = new SpriteButtonUtil(40, 100, null, () ->
+		var actionRowWidth = ACTION_BTN_W * 3 + ACTION_BTN_GAP * 2;
+		var actionRowX = (FlxG.width - actionRowWidth) / 2;
+		var actionRowY = FlxG.height - ACTION_BTN_H - ACTION_ROW_MARGIN_BOTTOM;
+		var amountRowY = actionRowY - SMALL_BTN_H - AMOUNT_TEXT_GAP;
+
+		var foldX = actionRowX;
+		var checkCallX = actionRowX + ACTION_BTN_W + ACTION_BTN_GAP;
+		var raiseConfirmX = actionRowX + (ACTION_BTN_W + ACTION_BTN_GAP) * 2;
+
+		foldBtn = new SpriteButtonUtil(foldX, actionRowY, null, () ->
 		{
 			disableActionButtons();
 			if (!table.handleAction(table.localSeat, Fold))
 				enableHumanActionButtons();
 		});
-		foldBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		foldBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
 		foldBtn.animation.add("button", [1]);
 		foldBtn.animation.play("button");
+		foldBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
+		foldBtn.updateHitbox();
 		add(foldBtn);
 
-		checkCallBtn = new SpriteButtonUtil(40, 120, null, () ->
+		checkCallBtn = new SpriteButtonUtil(checkCallX, actionRowY, null, () ->
 		{
 			disableActionButtons();
 			var action = (table.currentBet - localPlayer.currentBet) > 0 ? Call : Check;
 			if (!table.handleAction(table.localSeat, action))
 				enableHumanActionButtons();
 		});
-		checkCallBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		checkCallBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
 		checkCallBtn.animation.add("call", [0]);
 		checkCallBtn.animation.add("check", [3]);
 		checkCallBtn.animation.play("check");
+		checkCallBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
+		checkCallBtn.updateHitbox();
 		add(checkCallBtn);
 
-		callAmountText = new FlxText(80, 140, 80, "0", 16);
+		callAmountText = new FlxText(checkCallX + ACTION_BTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "", 24);
 		callAmountText.alignment = CENTER;
+		callAmountText.y = amountRowY + (SMALL_BTN_H - callAmountText.height) / 2;
 		add(callAmountText);
 
-		raiseMinusBtn = new FlxButton(40, 140, "-", () ->
+		raiseAmountText = new FlxText(raiseConfirmX + ACTION_BTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "$0", 24);
+		raiseAmountText.alignment = CENTER;
+		raiseAmountText.y = amountRowY + (SMALL_BTN_H - raiseAmountText.height) / 2;
+
+		raiseMinusBtn = new SpriteButtonUtil(raiseAmountText.x - SMALL_BTN_W - AMOUNT_TEXT_GAP, amountRowY, null, () ->
 		{
 			if (pendingRaiseBB > 1)
 				pendingRaiseBB--;
 			updateRaiseAmountText();
 		});
-		raiseMinusBtn.setGraphicSize(20, 20);
+		raiseMinusBtn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTN_FRAME_W, SMALL_BTN_FRAME_H);
+		raiseMinusBtn.animation.add("button", [0]);
+		raiseMinusBtn.animation.play("button");
+		raiseMinusBtn.setGraphicSize(Std.int(SMALL_BTN_W), Std.int(SMALL_BTN_H));
 		raiseMinusBtn.updateHitbox();
 		add(raiseMinusBtn);
 
-		raiseAmountText = new FlxText(80, 140, 80, "0", 16);
-		raiseAmountText.alignment = CENTER;
 		add(raiseAmountText);
 
-		raisePlusBtn = new FlxButton(120, 140, "+", () ->
+		raisePlusBtn = new SpriteButtonUtil(raiseAmountText.x + AMOUNT_TEXT_W + AMOUNT_TEXT_GAP, amountRowY, null, () ->
 		{
 			pendingRaiseBB++;
 			updateRaiseAmountText();
 		});
-		raisePlusBtn.setGraphicSize(20, 20);
+		raisePlusBtn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTN_FRAME_W, SMALL_BTN_FRAME_H);
+		raisePlusBtn.animation.add("button", [1]);
+		raisePlusBtn.animation.play("button");
+		raisePlusBtn.setGraphicSize(Std.int(SMALL_BTN_W), Std.int(SMALL_BTN_H));
 		raisePlusBtn.updateHitbox();
 		add(raisePlusBtn);
 
-
-		//raiseConfirmBtn = new FlxButton(40, 160, "Bet/Raise", () ->
-		raiseConfirmBtn = new SpriteButtonUtil(40, 100, null, () ->
+		raiseConfirmBtn = new SpriteButtonUtil(raiseConfirmX, actionRowY, null, () ->
 		{
 			disableActionButtons();
 			var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
@@ -134,15 +160,14 @@ class PlayState extends CoolBG
 			if (!table.handleAction(table.localSeat, action))
 				enableHumanActionButtons();
 		});
-		raiseConfirmBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		raiseConfirmBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
 		raiseConfirmBtn.animation.add("button", [2]);
 		raiseConfirmBtn.animation.play("button");
+		raiseConfirmBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
+		raiseConfirmBtn.updateHitbox();
 		add(raiseConfirmBtn);
 
 		disableActionButtons();
-
-		briefcase = new Briefcase(FlxG.width - 400, FlxG.height - 80);
-		add(briefcase);
 
 		table = new Table();
 		table.timerManager = timers;
@@ -168,37 +193,17 @@ class PlayState extends CoolBG
 
 		table.startHand();
 
-		pauseButton = new FlxSprite(0, 0,
-			'assets/images/placeholderpause.png'); // TODO: MT can you please draw it if you want to ofc but leave the old one it in incase someone snoops in files
-		pauseButton.x = FlxG.width - pauseButton.width;
+		pauseButton = new SpriteButtonUtil(0, 8, null, () -> openSubState(new PauseMenu()));
+		pauseButton.loadGraphic('assets/images/pokuhbuttonssmall.png', true, 50, 50);
+		pauseButton.animation.add("button", [2]);
+		pauseButton.animation.play("button");
+		pauseButton.x = FlxG.width - pauseButton.width - 8;
 		add(pauseButton);
 	}
 
-	var lastBriefcaseHover:Bool = false;
-	var isBriefcaseHovered:Bool = false;
-	var canUpdateBriefcasePos:Bool = true;
 	override public function update(elapsed:Float)
 	{
-		if (canUpdateBriefcasePos)
-		{
-			isBriefcaseHovered = FlxG.mouse.x > briefcase.x - 20 && FlxG.mouse.x < briefcase.x + briefcase.width + 20 && FlxG.mouse.y > briefcase.y - 20 && FlxG.mouse.y < briefcase.y + briefcase.height + 20;
-			if (isBriefcaseHovered != lastBriefcaseHover)
-			{
-				lastBriefcaseHover = isBriefcaseHovered;
-				canUpdateBriefcasePos = false;
-				if (isBriefcaseHovered)
-					FlxTween.tween(briefcase, { y: FlxG.height - 300}, 0.5, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
-						canUpdateBriefcasePos = true;
-					}});
-				else
-					FlxTween.tween(briefcase, { y: FlxG.height - 80}, 0.5, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
-						canUpdateBriefcasePos = true;
-					}});
-			}
-		}
 		super.update(elapsed);
-		if (FlxG.mouse.overlaps(pauseButton) && FlxG.mouse.justPressed) // pausing
-			openSubState(new PauseMenu());
 	}
 
 	function onDeal()
@@ -211,7 +216,7 @@ class PlayState extends CoolBG
 			var card = new Card();
 			card.x = 90 + (i * 150);
 			card.y = FlxG.height;
-			card.z = 60;
+			card.z = 90;
 			add(card);
 			holeCardSprites.push(card);
 
@@ -241,14 +246,23 @@ class PlayState extends CoolBG
 	function onCommunityCard(data:CardData, index:Int)
 	{
 		var card = new Card();
-		card.x = POT_X;
-		card.y = POT_Y;
 		add(card);
 		communityCardSprites.push(card);
 
 		card.x = 396.0 + index * 100;
-		card.y = COMMUNITY_Y;
-		card.reveal(data, true);
+		card.y = 310;
+		card.z = -150;
+
+		// frankly i have no idea what is going on here, but it works so dont bother with it lol
+
+		card.cameraOffsetY = card.height / 2;
+		card.angleX = -25;
+
+		var t = (index - 2) / 2;
+		card.angleY = -t * 20;
+		card.cameraOffsetX = -t * (card.width / 2);
+
+		card.reveal(data, false);
 
 		streetText.text = 'Street: ${table.street}';
 	}
@@ -339,7 +353,16 @@ class PlayState extends CoolBG
 	function enableHumanActionButtons()
 	{
 		var toCall = table.currentBet - localPlayer.currentBet;
-		//checkCallBtn.text = toCall > 0 ? 'Call $toCall' : "Check";
+		if (toCall > 0)
+		{
+			checkCallBtn.animation.play("call");
+			callAmountText.text = '$$$toCall';
+		}
+		else
+		{
+			checkCallBtn.animation.play("check");
+			callAmountText.text = "";
+		}
 
 		pendingRaiseBB = 1;
 		updateRaiseAmountText();
@@ -363,6 +386,6 @@ class PlayState extends CoolBG
 	function updateRaiseAmountText()
 	{
 		var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
-		raiseAmountText.text = '$target';
+		raiseAmountText.text = '$$$target';
 	}
 }

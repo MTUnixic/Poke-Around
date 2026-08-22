@@ -2,6 +2,7 @@ package util;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.util.FlxTimer;
 
 class SpriteButtonUtil extends FlxSprite
 {
