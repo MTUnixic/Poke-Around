@@ -7,15 +7,18 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.ui.FlxButton;
+import flixel.util.FlxTimer.FlxTimerManager;
 import flixel.util.FlxTimer;
 import menus.PauseMenu;
 import objects.Briefcase;
 import objects.Card;
+import objects.PlayerSprite;
 import objects.Table.PlayerAction;
 import objects.Table.PokerPlayer;
 import objects.Table.ShowdownResult;
 import objects.Table;
 import util.CardUtil.CardData;
+import util.SpriteButtonUtil;
 
 class PlayState extends CoolBG
 {
@@ -34,21 +37,32 @@ class PlayState extends CoolBG
 	var chipsText:FlxText;
 	var streetText:FlxText;
 
-	var foldBtn:FlxButton;
-	var checkCallBtn:FlxButton;
+	var foldBtn:SpriteButtonUtil;
+	var checkCallBtn:SpriteButtonUtil;
+	var callAmountText:FlxText;
+
 	var raiseMinusBtn:FlxButton;
 	var raisePlusBtn:FlxButton;
 	var raiseAmountText:FlxText;
-	var raiseConfirmBtn:FlxButton;
+	var raiseConfirmBtn:SpriteButtonUtil;
 
 	var briefcase:Briefcase;
 
 	var pendingRaiseBB:Int = 1;
 	var pauseButton:FlxSprite;
 
+	var playerSprites:Array<PlayerSprite> = [];
+
+	// Owned by this state instead of the global manager, so bot turns and the next-hand delay stop
+	// while the pause menu is open and die with the state instead of driving an old table.
+	var timers:FlxTimerManager;
+
 	override public function create()
 	{
 		super.create();
+
+		timers = new FlxTimerManager();
+		add(timers);
 
 		potText = new FlxText(POT_X - 60, POT_Y + 130, 200, "Pot: 0", 20);
 		add(potText);
@@ -59,20 +73,33 @@ class PlayState extends CoolBG
 		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
 		add(streetText);
 
-		foldBtn = new FlxButton(40, 100, "Fold", () ->
+		foldBtn = new SpriteButtonUtil(40, 100, null, () ->
 		{
 			disableActionButtons();
-			table.handleAction(table.localSeat, Fold);
+			if (!table.handleAction(table.localSeat, Fold))
+				enableHumanActionButtons();
 		});
+		foldBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		foldBtn.animation.add("button", [1]);
+		foldBtn.animation.play("button");
 		add(foldBtn);
 
-		checkCallBtn = new FlxButton(40, 120, "Check", () ->
+		checkCallBtn = new SpriteButtonUtil(40, 120, null, () ->
 		{
 			disableActionButtons();
 			var action = (table.currentBet - localPlayer.currentBet) > 0 ? Call : Check;
-			table.handleAction(table.localSeat, action);
+			if (!table.handleAction(table.localSeat, action))
+				enableHumanActionButtons();
 		});
+		checkCallBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		checkCallBtn.animation.add("call", [0]);
+		checkCallBtn.animation.add("check", [3]);
+		checkCallBtn.animation.play("check");
 		add(checkCallBtn);
+
+		callAmountText = new FlxText(80, 140, 80, "0", 16);
+		callAmountText.alignment = CENTER;
+		add(callAmountText);
 
 		raiseMinusBtn = new FlxButton(40, 140, "-", () ->
 		{
@@ -97,13 +124,19 @@ class PlayState extends CoolBG
 		raisePlusBtn.updateHitbox();
 		add(raisePlusBtn);
 
-		raiseConfirmBtn = new FlxButton(40, 160, "Bet/Raise", () ->
+
+		//raiseConfirmBtn = new FlxButton(40, 160, "Bet/Raise", () ->
+		raiseConfirmBtn = new SpriteButtonUtil(40, 100, null, () ->
 		{
 			disableActionButtons();
 			var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
 			var action = table.currentBet > 0 ? Raise(target) : Bet(target);
-			table.handleAction(table.localSeat, action);
+			if (!table.handleAction(table.localSeat, action))
+				enableHumanActionButtons();
 		});
+		raiseConfirmBtn.loadGraphic("assets/images/pokuhbuttons.png", true, 70, 50);
+		raiseConfirmBtn.animation.add("button", [2]);
+		raiseConfirmBtn.animation.play("button");
 		add(raiseConfirmBtn);
 
 		disableActionButtons();
@@ -112,9 +145,16 @@ class PlayState extends CoolBG
 		add(briefcase);
 
 		table = new Table();
+		table.timerManager = timers;
 
 		table.addPlayer("You", Local);
-		table.addPlayer("Dealer", Bot);
+		var dealerIndex = table.addPlayer("Dealer", Bot);
+
+		var botPlayer = new PlayerSprite();
+		botPlayer.x = FlxG.width/2 - botPlayer.width/2;
+		botPlayer.y = 70;
+		playerSprites[dealerIndex] = botPlayer;
+		insert(90, botPlayer);
 
 		localPlayer = table.players[table.localSeat];
 		
@@ -182,6 +222,18 @@ class PlayState extends CoolBG
 			}});
 		}
 
+		for (plr in table.players)
+		{
+			if (plr == localPlayer)
+				continue;
+
+			if (plr.isOut)
+				continue;
+
+			var plrSprite = playerSprites[table.players.indexOf(plr)];
+			plrSprite?.grabCard();
+		}
+
 		streetText.text = 'Street: ${table.street}';
 		refreshChipsText();
 	}
@@ -209,7 +261,7 @@ class PlayState extends CoolBG
 
 	function onTurnChanged(seat:Int)
 	{
-		if (table.players[seat].isBot)
+		if (seat < 0 || table.players[seat].isBot)
 			disableActionButtons();
 		else
 			enableHumanActionButtons();
@@ -217,6 +269,16 @@ class PlayState extends CoolBG
 
 	function onPlayerActed(seat:Int, action:PlayerAction)
 	{
+		switch (action)
+		{
+			case Fold:
+				playerSprites[seat]?.fold();
+			case Check, Call:
+				playerSprites[seat]?.call();
+			case Bet(t), Raise(t):
+				playerSprites[seat]?.raise(t, t >= table.players[seat].chips);
+		}
+
 		if (seat == table.localSeat)
 			switch (action)
 			{
@@ -240,7 +302,7 @@ class PlayState extends CoolBG
 	{
 		killHoleCards();
 
-		new FlxTimer().start(2.5, (_) ->
+		new FlxTimer(timers).start(2.5, (_) ->
 		{
 			if (table.playersWithChips() < 2)
 				FlxG.resetState();
@@ -277,7 +339,7 @@ class PlayState extends CoolBG
 	function enableHumanActionButtons()
 	{
 		var toCall = table.currentBet - localPlayer.currentBet;
-		checkCallBtn.text = toCall > 0 ? 'Call $toCall' : "Check";
+		//checkCallBtn.text = toCall > 0 ? 'Call $toCall' : "Check";
 
 		pendingRaiseBB = 1;
 		updateRaiseAmountText();

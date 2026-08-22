@@ -8,6 +8,7 @@ class CoolBG extends FlxState
 {
     var glow:FlxSprite;
     var frame:FlxSprite;
+	var pokerTable:FlxSprite;
 
     var diam:FlxBackdrop;
     var squa:FlxBackdrop;
@@ -38,6 +39,14 @@ class CoolBG extends FlxState
         glow.loadGraphic('assets/images/coolbg/pokuhbgglow.png');
         glow.alpha = scratchGhost2Flixel(40);
         add(glow);
+
+        pokerTable = new FlxSprite();
+        pokerTable.loadGraphic('assets/images/pokuhtable.png');
+		pokerTable.setGraphicSize(pokerTable.width * 2.75, pokerTable.height * 2.75);
+		pokerTable.updateHitbox();
+        pokerTable.screenCenter();
+		pokerTable.y += 140;
+        insert(100, pokerTable);
     }
 
     /** too lazy to do the math **/

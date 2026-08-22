@@ -69,6 +69,12 @@ class Table
 	public var turnSeat(default, null):Int = -1;
 	public var street(default, null):Street = Waiting;
 
+	/**
+	 * Timers used for bot thinking are created on this manager when set, so the owning state can
+	 * pause/destroy them with itself. Falls back to the global manager when null.
+	 */
+	public var timerManager:FlxTimerManager = null;
+
 	var deck:Array<CardData> = [];
 	var actedThisRound:Array<Bool> = [false, false, false, false];
 
@@ -106,6 +112,7 @@ class Table
 		community = [];
 		pot = 0;
 		currentBet = 0;
+		turnSeat = -1;
 		street = Preflop;
 		deck = CardUtil.freshShuffledDeck();
 
@@ -167,15 +174,25 @@ class Table
 				postBet(seat, toCall);
 
 			case Bet(target), Raise(target):
-				var actualTarget = Std.int(Math.max(target, currentBet + BIG_BLIND));
-				var toPut = actualTarget - p.currentBet;
+				var minTarget = currentBet + BIG_BLIND;
+				var actualTarget = Std.int(Math.max(target, minTarget));
+				var toPut = Std.int(Math.min(actualTarget - p.currentBet, p.chips));
 				if (toPut <= 0)
 					return false;
-				toPut = Std.int(Math.min(toPut, p.chips));
 				postBet(seat, toPut);
-				currentBet = p.currentBet;
-				for (i in 0...players.length)
-					actedThisRound[i] = false;
+
+				// An all-in that lands short of the current bet must never drag `currentBet` back
+				// down: players who already matched the higher bet would end up unable to check,
+				// call or raise, which used to freeze the hand.
+				if (p.currentBet > currentBet)
+				{
+					var isFullRaise = p.currentBet >= minTarget;
+					currentBet = p.currentBet;
+					// Only a full raise reopens the betting for players who already acted.
+					if (isFullRaise)
+						for (i in 0...players.length)
+							actedThisRound[i] = false;
+				}
 		}
 
 		actedThisRound[seat] = true;
@@ -195,6 +212,33 @@ class Table
 			case Call: "call";
 			case Bet(target): 'bet to $target';
 			case Raise(target): 'raise to $target';
+		}
+	}
+
+	/**
+	 * Maps a wanted action onto the closest action that `handleAction()` will actually accept.
+	 * Bots pick actions from incomplete information, and a rejected bot action means nothing
+	 * schedules the next turn, so the hand would sit there forever.
+	 */
+	function legalAction(seat:Int, action:PlayerAction):PlayerAction
+	{
+		var p = players[seat];
+		var toCall = currentBet - p.currentBet;
+
+		return switch (action)
+		{
+			case Fold: toCall > 0 ? Fold : Check;
+			case Check: toCall > 0 ? Call : Check;
+			case Call: toCall > 0 ? Call : Check;
+
+			case Bet(target), Raise(target):
+				if (p.chips <= toCall)
+					toCall > 0 ? Call : Check;
+				else
+				{
+					var actualTarget = Std.int(Math.max(target, currentBet + BIG_BLIND));
+					currentBet > 0 ? Raise(actualTarget) : Bet(actualTarget);
+				}
 		}
 	}
 
@@ -270,6 +314,58 @@ class Table
 		return -1;
 	}
 
+	/**
+	 * True when nobody has a betting decision left this street, i.e. everyone is folded or all-in,
+	 * or the single remaining player has nothing left to call.
+	 */
+	function bettingDone():Bool
+	{
+		var actors = [for (i in 0...players.length) if (!players[i].isOut && !players[i].folded && !players[i].isAllIn) i];
+		if (actors.length == 0)
+			return true;
+		if (actors.length == 1)
+			return players[actors[0]].currentBet >= currentBet;
+		return false;
+	}
+
+	/**
+	 * Returns the part of the highest bet that nobody matched to its owner. Without this, a player
+	 * betting more than anyone can cover would lose the uncallable remainder into the pot.
+	 */
+	function refundUncalledBet()
+	{
+		var topSeat = -1;
+		var top = -1;
+		var second = 0;
+
+		for (i in 0...players.length)
+		{
+			var bet = players[i].currentBet;
+			if (bet > top)
+			{
+				second = top < 0 ? 0 : top;
+				top = bet;
+				topSeat = i;
+			}
+			else if (bet > second)
+				second = bet;
+		}
+
+		if (topSeat == -1 || top - second <= 0)
+			return;
+
+		var excess = top - second;
+		var p = players[topSeat];
+		p.chips += excess;
+		p.currentBet -= excess;
+		pot -= excess;
+
+		if (p.chips > 0)
+			p.isAllIn = false;
+
+		onPotChanged();
+	}
+
 	function allSettled():Bool
 	{
 		for (i in 0...players.length)
@@ -290,7 +386,20 @@ class Table
 		onTurnChanged(seat);
 
 		if (players[seat].isBot)
-			new FlxTimer().start(0.6, (_) -> handleAction(seat, botDecideAction(seat)));
+			new FlxTimer(timerManager).start(0.6, (_) -> takeBotTurn(seat));
+	}
+
+	function takeBotTurn(seat:Int)
+	{
+		if (seat != turnSeat)
+			return;
+
+		if (handleAction(seat, legalAction(seat, botDecideAction(seat))))
+			return;
+
+		// Last resort, so a bad decision can never leave the table stuck on this seat.
+		var toCall = currentBet - players[seat].currentBet;
+		handleAction(seat, toCall > 0 ? Fold : Check);
 	}
 
 	function advanceTurn()
@@ -299,7 +408,7 @@ class Table
 		if (contenders.length <= 1)
 			return awardPotToRemaining();
 
-		if (allSettled())
+		if (bettingDone() || allSettled())
 			return advanceStreet();
 
 		var next = nextToActSeat(turnSeat);
@@ -311,6 +420,8 @@ class Table
 
 	function advanceStreet()
 	{
+		refundUncalledBet();
+
 		for (i in 0...players.length)
 			actedThisRound[i] = false;
 
@@ -346,7 +457,7 @@ class Table
 		if (contenders.length <= 1)
 			return awardPotToRemaining();
 
-		var next = nextToActSeat(dealerSeat);
+		var next = bettingDone() ? -1 : nextToActSeat(dealerSeat);
 		if (next == -1)
 			return advanceStreet();
 
@@ -355,6 +466,8 @@ class Table
 
 	function awardPotToRemaining()
 	{
+		refundUncalledBet();
+
 		var winnerSeat = -1;
 		for (i in 0...players.length)
 			if (!players[i].folded)
@@ -376,6 +489,7 @@ class Table
 		}
 		pot = 0;
 		street = Showdown;
+		turnSeat = -1;
 		onShowdown(results);
 		onHandOver();
 	}
@@ -418,6 +532,7 @@ class Table
 		}
 
 		pot = 0;
+		turnSeat = -1;
 		onShowdown(showdownResults);
 		onHandOver();
 	}

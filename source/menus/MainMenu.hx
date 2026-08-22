@@ -18,6 +18,7 @@ class MainMenu extends CoolBG
 		// remove these from main menu as they are for gameplay... MT told me
 		remove(glow, true);
 		remove(frame, true);
+		remove(pokerTable, true);
 
 		menu = new MenuUtil(['Play', 'Test Pause', 'Quit Game']);
 	
