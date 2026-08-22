@@ -51,6 +51,8 @@ class MainMenu extends CoolBG
 
 	override function update(elapsed:Float)
 	{
+		if (FlxG.keys.justPressed.NINE)
+			FlxG.switchState(CharacterTestState.new);
 		super.update(elapsed);
 		menu.updateLoop();
 		mouseCamera();
