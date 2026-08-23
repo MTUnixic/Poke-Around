@@ -32,7 +32,7 @@ class ItemCard extends FlxThreeSprite
 
 		var restOffsetY = offset.y;
 
-		FlxTween.tween(offset, { y: restOffsetY + 100 }, 0.5, { ease: FlxEase.quadInOut });
+		FlxTween.tween(offset, { y: restOffsetY + 125 }, 0.5, { ease: FlxEase.quadInOut });
 		FlxTween.tween(this, { angleY: 270 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
 			animation.play(EnumValueTools.getName(item));
 			this.angleY = -270;

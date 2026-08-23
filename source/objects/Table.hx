@@ -59,7 +59,7 @@ class Table
 {
 	public static inline var SMALL_BLIND = 10;
 	public static inline var BIG_BLIND = 20;
-	public static inline var STARTING_CHIPS = 1000;
+	public static inline var STARTING_CHIPS = 1250;
 
 	public var players(default, null):Array<PokerPlayer> = [];
 	public var localSeat(default, null):Int = 0;

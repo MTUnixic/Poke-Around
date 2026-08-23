@@ -1,6 +1,7 @@
 package menus;
 
 import flixel.FlxG;
+import flixel.FlxSprite;
 import flixel.addons.transition.FlxTransitionSprite.GraphicTransTileDiamond;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.addons.transition.TransitionData;
@@ -10,7 +11,6 @@ import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import lime.system.System;
 import util.MenuUtil;
 import util.MouseUtil;
 
@@ -21,7 +21,6 @@ class MainMenu extends BackgrndState
 
 	override function create()
 	{
-
 		var diamond:FlxGraphic = FlxGraphic.fromClass(GraphicTransTileDiamond);
 		diamond.persist = true;
 		diamond.destroyOnNoUse = false;
@@ -37,26 +36,28 @@ class MainMenu extends BackgrndState
 		remove(frame, true);
 		remove(pokerTable, true);
 
-		menu = new MenuUtil(['Play', #if !web'Quit Game'#end]);
+		menu = new MenuUtil(['Play', 'Credits', #if !web'Quit Game'#end]);
 	
 		buttonGroup = new FlxTypedGroup<FlxText>();
 
 		menu.makeButtonGroup(buttonGroup);
 		menu.addConfirmOption('Play', () -> FlxG.switchState(() -> new PlayState()));
-		#if !web
-		menu.addConfirmOption('Quit Game', () -> System.exit(0));
-		#end
+		menu.addConfirmOption('Credits', () -> FlxG.switchState(() -> new CreditsMenu()));
+		#if !web menu.addConfirmOption('Quit Game', () -> System.exit(0)); #end
 		add(buttonGroup);
 
 		for (text in buttonGroup)
 			text.scrollFactor.y = .9;
 
-		final titleText:FlxText = new FlxText(0, 0, 0, 'John\nHaxe\nJam');
-		titleText.size = 50;
-		titleText.screenCenter();
-		titleText.y -= 110;
-		titleText.scrollFactor.setXY(1.4);
-		add(titleText);
+		final titleSprite = new FlxSprite();
+		titleSprite.loadGraphic('assets/images/game/pokuhtitle.png');
+		titleSprite.setGraphicSize(titleSprite.width*2, titleSprite.height*2);
+		titleSprite.screenCenter();
+		titleSprite.y -= 110;
+		titleSprite.scrollFactor.setXY(1.4);
+		add(titleSprite);
+
+		FlxG.sound.create("assets/music/buckshot-mt-piano.ogg").play(true);
 	}
 
 	override function update(elapsed:Float)

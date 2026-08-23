@@ -1,7 +1,6 @@
 package;
 
 import flixel.FlxSprite;
-import flixel.FlxState;
 import flixel.addons.display.FlxBackdrop;
 import flixel.addons.transition.FlxTransitionableState;
 
@@ -20,6 +19,7 @@ class BackgrndState extends FlxTransitionableState
     {
         final bg = new FlxSprite();
         bg.loadGraphic('assets/images/coolbg/pokuhbg.png');
+        bg.scrollFactor.setXY(0);
         bg.screenCenter();
         add(bg);
 
@@ -46,7 +46,7 @@ class BackgrndState extends FlxTransitionableState
 		pokerTable.updateHitbox();
         pokerTable.screenCenter();
 		pokerTable.y += 80;
-        add(pokerTable); // put back insert 100 pokerTable if i fucked up sum -MT
+        add(pokerTable); // put back insert 125 pokerTable if i fucked up sum -MT
 
         glow = new FlxSprite();
         glow.loadGraphic('assets/images/coolbg/pokuhbgglow.png');

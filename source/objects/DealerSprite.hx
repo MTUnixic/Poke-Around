@@ -66,7 +66,7 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 
 	public function spawnHint(hint:String)
 	{
-		var txt = new FlxText(sprite.width + 100, 80, 200, hint, 16);
+		var txt = new FlxText(sprite.width + 125, 80, 200, hint, 16);
 		txt.color = 0xff6d758d;
 		txt.moves = true;
 		txt.velocity.x = FlxG.random.float(-10, 10);

@@ -262,6 +262,8 @@ class PlayState extends BackgrndState
 		pauseButton.animation.play("button");
 		pauseButton.x = FlxG.width - pauseButton.width - 8;
 		add(pauseButton);
+
+		FlxG.sound.create("assets/music/buckshot-mt.ogg").play(true);
 	}
 
 	override public function update(elapsed:Float)
@@ -331,7 +333,7 @@ class PlayState extends BackgrndState
 			case DesignManual: {name: "DesignManual", text: "You inspect the design manual for this game. It reveals the next 3 community cards."};
 			case Calculator: {name: "Calculator", text: "Increases your opponent's dept, focing them to bet double. High risk, high reward."};
 			case Marker: {name: "Marker", text: "You use a magic marker to change the type of your weakest hole card with the strongest card from your opponent's hand."};
-			case GoldenBullet: {name: "GoldenBullet", text: "Your life flash before your eyes, as you get saved from elimination with 100 extra chips. Wasted if unused, plan carefully."};
+			case GoldenBullet: {name: "GoldenBullet", text: "Your life flash before your eyes, as you get saved from elimination with 125 extra chips. Wasted if unused, plan carefully."};
 			case Intimidation: {name: "Intimidation", text: "You cock your pistol from your back pouch, your opponent backs off for a while."};
 		}
 	}
@@ -401,7 +403,7 @@ class PlayState extends BackgrndState
 		for (i in 0...localPlayer.holeCards.length)
 		{
 			var card = new Card();
-			card.x = 90 + (i * 100);
+			card.x = 90 + (i * 125);
 			card.y = FlxG.height;
 			card.z = 90;
 			add(card);
@@ -436,7 +438,7 @@ class PlayState extends BackgrndState
 		add(card);
 		communityCardSprites.push(card);
 
-		card.x = 396.0 + index * 100;
+		card.x = 396.0 + index * 125;
 		var restY = 310.0;
 		card.z = -150;
 
@@ -554,7 +556,7 @@ class PlayState extends BackgrndState
 		var localWon = results.filter(r -> r.seat == table.localSeat).length > 0;
 		var amountLost = handStartChips - localPlayer.chips;
 
-		if (!localWon && !localFolded && amountLost > 100)
+		if (!localWon && !localFolded && amountLost > 125)
 			grantRandomItem();
 	}
 
@@ -579,8 +581,8 @@ class PlayState extends BackgrndState
 				goldenBulletArmed = false; // one hand only, win or lose - "next round will be useless"
 				if (localPlayer.chips <= 0)
 				{
-					table.addChips(table.localSeat, 100);
-					addHistoryText("Golden Bullet saves you with 100 chips!");
+					table.addChips(table.localSeat, 125);
+					addHistoryText("Golden Bullet saves you with 125 chips!");
 				}
 			}
 
@@ -594,9 +596,6 @@ class PlayState extends BackgrndState
 				{
 					for (s in dealerSprites)
 					{
-						if (s == null)
-							continue;
-						
 						s?.preLose();
 						FlxTimer.wait(1.5, () -> s?.lose());
 						FlxTimer.wait(2, () -> {
@@ -729,7 +728,7 @@ enum PlayerItem
 	Marker;
 
 	/**
-		saves you from elimination by giving you 100 extra chips upon losing all credits, but only works if you lose to the current round, next round will be useless
+		saves you from elimination by giving you 125 extra chips upon losing all credits, but only works if you lose to the current round, next round will be useless
 	**/
 	GoldenBullet;
 
