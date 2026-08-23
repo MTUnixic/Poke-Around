@@ -594,6 +594,9 @@ class PlayState extends BackgrndState
 				{
 					for (s in dealerSprites)
 					{
+						if (s == null)
+							continue;
+						
 						s?.preLose();
 						FlxTimer.wait(1.5, () -> s?.lose());
 						FlxTimer.wait(2, () -> {
