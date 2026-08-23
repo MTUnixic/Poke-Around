@@ -1,5 +1,6 @@
 package objects;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxSpriteContainer.FlxTypedSpriteContainer;
 import flixel.text.FlxText;
@@ -58,6 +59,7 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 			var anim = sprite.animation.getByName(animName);
 			if (anim == null)
 				return;
+			sprite.animation.play(animName);
 		});
 	}
 
@@ -65,11 +67,10 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		var txt = new FlxText(sprite.width + 100, 80, 200, hint, 16);
 		txt.color = 0xff6d758d;
-		/* TODO: doesnt work for some reason:
-		txt.velocity.x = FlxG.random.float(-90, 90);
-		txt.velocity.y = -200;
-		txt.acceleration.y = 70;
-		*/
+		txt.moves = true;
+		txt.velocity.x = FlxG.random.float(-10, 10);
+		txt.velocity.y = -90;
+		txt.acceleration.y = 20;
 		FlxTween.tween(txt, { alpha: 0 }, 1.5, { ease: FlxEase.quintIn, onComplete: (_) ->
 		{
 			txt.destroy();
@@ -123,6 +124,7 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		idleTimer = Math.POSITIVE_INFINITY;
 		sprite.animation.play("ToThink");
 		postAnim("Think");
+		spawnHint("Thinking...");
 	}
 
 	public function grabCard()

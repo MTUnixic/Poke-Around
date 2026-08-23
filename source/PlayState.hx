@@ -5,6 +5,7 @@ import flixel.FlxSprite;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import menus.PauseMenu;
 import objects.Briefcase;
@@ -282,7 +283,7 @@ class PlayState extends BackgrndState
 		communityCardSprites.push(card);
 
 		card.x = 396.0 + index * 100;
-		card.y = 310;
+		var restY = 310.0;
 		card.z = -150;
 
 		// frankly i have no idea what is going on here, but it works so dont bother with it lol
@@ -294,7 +295,10 @@ class PlayState extends BackgrndState
 		card.angleY = -t * 20;
 		card.cameraOffsetX = -t * (card.width / 2);
 
-		card.reveal(data, false);
+		card.y = restY - 400;
+		FlxTween.tween(card, { y: restY }, 0.4, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
+			card.reveal(data, false);
+		}});
 
 		streetText.text = 'Street: ${table.street}';
 	}
@@ -307,21 +311,16 @@ class PlayState extends BackgrndState
 
 	function onTurnChanged(seat:Int)
 	{
-		if (table.players[seat].isBot) { // idk why it doesnt run once and never again, its supposed to change color when the turn changes to show who's turn it is. help pls -MT
-			FlxTween.tween(squa, {color: 0xfffa6a0a}, 1.0, {
-				ease: FlxEase.circOut, type: PERSIST
-			});
-			FlxTween.tween(glow, {color: 0xfffa6a0a}, 1.0, {
-				ease: FlxEase.circOut, type: PERSIST
-			});
-		} else {
-			FlxTween.tween(squa, {color: 0xff6d758d}, 1.0, {
-				ease: FlxEase.circOut, type: PERSIST
-			});
-			FlxTween.tween(glow, {color: 0xff6d758d}, 1.0, {
-				ease: FlxEase.circOut, type: PERSIST
-			});
-		}
+		FlxTween.cancelTweensOf(squa);
+		FlxTween.cancelTweensOf(glow);
+
+		var targetColor:FlxColor = table.players[seat].isBot ? 0xfffa6a0a : 0xff6d758d;
+
+		FlxTween.color(squa, 1.0, squa.color, targetColor, {ease: FlxEase.circOut, type: PERSIST});
+		FlxTween.color(glow, 1.0, glow.color, targetColor, {ease: FlxEase.circOut, type: PERSIST});
+
+		if (table.players[seat].isBot)
+			dealerSprites[seat]?.think();
 
 		if (seat < 0 || table.players[seat].isBot)
 			disableActionButtons();

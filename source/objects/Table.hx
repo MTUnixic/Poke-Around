@@ -1,5 +1,6 @@
 package objects;
 
+import flixel.FlxG;
 import flixel.util.FlxTimer;
 import util.CardUtil;
 
@@ -386,7 +387,7 @@ class Table
 		onTurnChanged(seat);
 
 		if (players[seat].isBot)
-			new FlxTimer(timerManager).start(0.6, (_) -> takeBotTurn(seat));
+			new FlxTimer(timerManager).start(FlxG.random.float(0.7, 2.4), (_) -> takeBotTurn(seat));
 	}
 
 	function takeBotTurn(seat:Int)
