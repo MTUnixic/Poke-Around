@@ -293,47 +293,99 @@ class Table
 		}
 	}
 
-	// 0 (worthless) .. 1 (nuts), based on the bot's hole cards plus whatever community cards are out
-	function handStrength(seat:Int):Float
+	/**
+	 * Monte Carlo win probability for `seat`'s hand: deals random plausible hole cards for
+	 * every live opponent plus the remaining community cards over many trials, and returns
+	 * the fraction of the pot `seat` would win on average (ties split). Works unchanged from
+	 * preflop (samples all 5 community cards) through the river (samples none).
+	 *
+	 * Replaces a flawed hand-category-only score that rated any single pair as ~11% strength
+	 * (rank 1 / 9) and unmade draws as 0%, which made the bot fold strong made hands and
+	 * well-priced draws far too often, and check/call instead of betting them for value.
+	 */
+	function handEquity(seat:Int, trials:Int = 200):Float
 	{
-		var cards = players[seat].holeCards.concat(community);
+		var me = players[seat];
+		var opponents = [for (i in 0...players.length) if (i != seat && !players[i].isOut && !players[i].folded) i];
+		if (opponents.length == 0)
+			return 1;
 
-		if (cards.length < 5)
-			return preflopStrength(players[seat].holeCards);
+		inline function cardKey(c:CardData):Int
+			return c.suit * 13 + c.num;
 
-		var combo = cards.length == 7 ? CardUtil.bestHandOf7(cards) : CardUtil.checkCombos(cards);
-		return Math.min(1, combo.rank / 9);
+		var known:Map<Int, Bool> = new Map();
+		for (c in me.holeCards)
+			known.set(cardKey(c), true);
+		for (c in community)
+			known.set(cardKey(c), true);
+
+		var unseen:Array<CardData> = [];
+		for (suit in 0...4)
+			for (num in 1...14)
+			{
+				var c:CardData = {suit: suit, num: num};
+				if (!known.exists(cardKey(c)))
+					unseen.push(c);
+			}
+
+		var boardNeeded = 5 - community.length;
+		var cardsNeeded = opponents.length * 2 + boardNeeded;
+		if (cardsNeeded > unseen.length)
+			return 0.5;
+
+		var equitySum = 0.0;
+
+		for (t in 0...trials)
+		{
+			// partial Fisher-Yates: only the prefix we're about to deal needs to be randomized
+			for (i in 0...cardsNeeded)
+			{
+				var j = i + FlxG.random.int(0, unseen.length - i - 1);
+				var tmp = unseen[i];
+				unseen[i] = unseen[j];
+				unseen[j] = tmp;
+			}
+
+			var idx = 0;
+			var board = community.copy();
+			for (i in 0...boardNeeded)
+				board.push(unseen[idx++]);
+
+			var myRank = CardUtil.bestHandOf7(me.holeCards.concat(board));
+
+			var tiedCount = 1;
+			var beaten = false;
+			for (o in opponents)
+			{
+				var oppHole = [unseen[idx++], unseen[idx++]];
+				var cmp = compareHandRank(myRank, CardUtil.bestHandOf7(oppHole.concat(board)));
+				if (cmp < 0)
+					beaten = true;
+				else if (cmp == 0)
+					tiedCount++;
+			}
+
+			if (!beaten)
+				equitySum += 1.0 / tiedCount;
+		}
+
+		return equitySum / trials;
 	}
 
-	function preflopStrength(hole:Array<CardData>):Float
+	static function compareHandRank(a:{rank:Int, num1:Int, num2:Int}, b:{rank:Int, num1:Int, num2:Int}):Int
 	{
-		inline function highNum(n:Int):Int
-			return n == 1 ? 14 : n; // ace high
-
-		var r1 = highNum(hole[0].num);
-		var r2 = highNum(hole[1].num);
-		var hi = Math.max(r1, r2);
-		var lo = Math.min(r1, r2);
-		var gap = hi - lo;
-
-		var score = (hi + lo) / 28;
-		if (r1 == r2)
-			score += 0.35 + hi / 14 * 0.15;
-		if (hole[0].suit == hole[1].suit)
-			score += 0.08;
-		if (gap == 1)
-			score += 0.05;
-		else if (gap == 2)
-			score += 0.02;
-
-		return Math.min(1, score);
+		if (a.rank != b.rank)
+			return a.rank - b.rank;
+		if (a.num1 != b.num1)
+			return a.num1 - b.num1;
+		return a.num2 - b.num2;
 	}
 
 	function botDecideAction(seat:Int):PlayerAction
 	{
 		var p = players[seat];
 		var toCall = currentBet - p.currentBet;
-		var strength = handStrength(seat);
+		var strength = handEquity(seat);
 		var bluff = Math.random() < 0.08; // occasional bluff so strength isn't fully readable from behavior
 
 		if (toCall <= 0)
@@ -347,11 +399,13 @@ class Table
 			return Bet(currentBet + size);
 		}
 
+		// strength is now a real win probability, so comparing it to pot odds directly
+		// (plus a small safety margin) is the mathematically correct call/fold rule
 		var potOdds = toCall / (pot + toCall);
-		if (!bluff && strength < potOdds * 1.3)
+		if (!bluff && strength < potOdds * 1.05)
 			return Fold;
 
-		if (bluff || strength > 0.75) // top 10 random numbers i pulled from my ass
+		if (bluff || strength > 0.7)
 		{
 			var raiseSize = BIG_BLIND + Std.int((0.5 + strength) * BIG_BLIND * 3);
 			return Raise(currentBet + raiseSize);
