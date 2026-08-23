@@ -15,6 +15,6 @@ class Main extends Sprite
 
 		addChild(new FlxGame(0, 0, MainMenu));
 
-		FlxG.mouse.load(FlxGraphic.fromAssetKey("assets/images/pokeryouhorse.png", true, null, false).bitmap, 1, 11, 3);
+		FlxG.mouse.load(FlxGraphic.fromAssetKey("assets/images/pokeryouhorse.png", true, null, false).bitmap, 1, -11, -3);
 	}
 }
