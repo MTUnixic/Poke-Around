@@ -24,7 +24,7 @@ class PauseMenu extends FlxSubState
 		
 		bg = new FlxSprite(0, 0);
 		bg.makeGraphic(1, 1, 0x94000000);
-		bg.setGraphicSize(1280, 720);
+		bg.setGraphicSize(1280*2, 720*2);
 		bg.screenCenter();
 		bg.alpha = 0;
 

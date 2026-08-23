@@ -37,13 +37,12 @@ class MainMenu extends BackgrndState
 		remove(frame, true);
 		remove(pokerTable, true);
 
-		menu = new MenuUtil(['Play', 'Test Pause', #if !web'Quit Game'#end]);
+		menu = new MenuUtil(['Play', #if !web'Quit Game'#end]);
 	
 		buttonGroup = new FlxTypedGroup<FlxText>();
 
 		menu.makeButtonGroup(buttonGroup);
 		menu.addConfirmOption('Play', () -> FlxG.switchState(() -> new PlayState()));
-		menu.addConfirmOption('Test Pause', () -> openSubState(new PauseMenu()));
 		#if !web
 		menu.addConfirmOption('Quit Game', () -> System.exit(0));
 		#end
