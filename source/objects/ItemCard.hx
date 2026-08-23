@@ -2,6 +2,7 @@ package objects;
 
 import PlayState;
 import backend.flixel.FlxThreeSprite;
+import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import haxe.EnumTools.EnumValueTools;
@@ -31,6 +32,8 @@ class ItemCard extends FlxThreeSprite
 		value = item;
 
 		var restOffsetY = offset.y;
+
+		FlxG.sound.play("assets/sounds/Sonic.exe Ding SFX.wav").play();
 
 		FlxTween.tween(offset, { y: restOffsetY + 125 }, 0.5, { ease: FlxEase.quadInOut });
 		FlxTween.tween(this, { angleY: 270 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {

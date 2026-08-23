@@ -1,6 +1,7 @@
 package menus;
 
 import BackgrndState;
+import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxContainer;
@@ -24,8 +25,8 @@ import util.MouseUtil;
     var isDescOpened = false;
     var maskX = 180;
 
-    var textColor:FlxColor;
-    var outlineColor:FlxColor;
+    var textColor:Null<FlxColor>;
+    var outlineColor:Null<FlxColor>;
     var nameText:FlxText;
 
     public function new(iconFrame:Int, ?maskX = 180) 
@@ -189,8 +190,7 @@ class CreditsMenu extends BackgrndState
 		menu.addConfirmOption('Go Back', () -> FlxG.switchState(() -> new MainMenu()));
 		add(buttonGroup);
 
-        var music = FlxG.sound.create("assets/music/buckshot-mt-piano.ogg");
-        music.play(true);
+		MusicManager.ensureMenuMusic();
     }
 
     override function update(elapsed:Float) {

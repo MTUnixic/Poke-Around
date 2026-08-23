@@ -1,5 +1,6 @@
 package;
 
+import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxGame;
 import flixel.graphics.FlxGraphic;

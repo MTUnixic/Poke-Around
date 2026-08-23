@@ -1,5 +1,6 @@
 package menus;
 
+import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxSubState;
@@ -58,6 +59,9 @@ class GameOverSubState extends FlxSubState
 
 		new FlxTimer().start(0.4, (_) -> FlxTween.tween(subText, {y: subTargetY, alpha: 1}, 0.5, {ease: FlxEase.quadOut}));
 
-		new FlxTimer().start(5.0, (_) -> FlxG.switchState(() -> new MainMenu()));
+		new FlxTimer().start(5.0, (_) -> {
+			MusicManager.switchToMenuMusic();
+			FlxG.switchState(() -> new MainMenu());
+		});
 	}
 }

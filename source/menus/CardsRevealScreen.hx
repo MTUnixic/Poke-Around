@@ -65,6 +65,8 @@ class CardsRevealScreen extends FlxSubState
 			});
 		}
 
+		FlxG.sound.play("assets/sounds/Sonic.exe Ding SFX2.wav").play();
+
 		FlxTimer.wait(4.1, () -> {
 			FlxTween.tween(bg, {alpha: 0}, 0.5, { onComplete: (_) -> {
 				close();

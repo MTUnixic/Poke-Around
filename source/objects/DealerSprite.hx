@@ -102,6 +102,11 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 			sprite.animation.play("SlamAllIn");
 			postAnim("AllIn");
 			spawnHint('ALL IN WITH $$${target}!');
+			FlxG.sound.play('assets/sounds/Ya.wav').play();
+			FlxTimer.wait(0.75, () -> {
+				FlxG.camera.shake(0.02, 0.2);
+				FlxG.sound.play('assets/sounds/slam.wav').play();
+			});
 		}
 		else
 		{
@@ -117,6 +122,7 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		idleTimer = 1.5;
 		sprite.animation.play("Fold");
 		spawnHint("Folded");
+		FlxG.sound.play('assets/sounds/boowomp.wav').play();
 	}
 
 	public function think()

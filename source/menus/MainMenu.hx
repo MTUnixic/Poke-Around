@@ -1,5 +1,6 @@
 package menus;
 
+import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.transition.FlxTransitionSprite.GraphicTransTileDiamond;
@@ -41,9 +42,12 @@ class MainMenu extends BackgrndState
 		buttonGroup = new FlxTypedGroup<FlxText>();
 
 		menu.makeButtonGroup(buttonGroup);
-		menu.addConfirmOption('Play', () -> FlxG.switchState(() -> new PlayState()));
+		menu.addConfirmOption('Play', () -> {
+			MusicManager.switchToGameMusic();
+			FlxG.switchState(() -> new PlayState());
+		});
 		menu.addConfirmOption('Credits', () -> FlxG.switchState(() -> new CreditsMenu()));
-		#if !web menu.addConfirmOption('Quit Game', () -> System.exit(0)); #end
+		#if !web menu.addConfirmOption('Quit Game', () -> Sys.exit(0)); #end
 		add(buttonGroup);
 
 		for (text in buttonGroup)
@@ -57,7 +61,7 @@ class MainMenu extends BackgrndState
 		titleSprite.scrollFactor.setXY(1.4);
 		add(titleSprite);
 
-		FlxG.sound.create("assets/music/buckshot-mt-piano.ogg").play(true);
+		MusicManager.ensureMenuMusic();
 	}
 
 	override function update(elapsed:Float)

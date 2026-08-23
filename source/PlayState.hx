@@ -1,5 +1,6 @@
 package;
 
+import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.effects.FlxFlicker;
@@ -262,8 +263,6 @@ class PlayState extends BackgrndState
 		pauseButton.animation.play("button");
 		pauseButton.x = FlxG.width - pauseButton.width - 8;
 		add(pauseButton);
-
-		FlxG.sound.create("assets/music/buckshot-mt.ogg").play(true);
 	}
 
 	override public function update(elapsed:Float)
@@ -393,6 +392,7 @@ class PlayState extends BackgrndState
 	function onDeal()
 	{
 		addHistoryText("New hand dealt.");
+		FlxG.sound.play('assets/sounds/shuffle${FlxG.random.int(1,3)}.wav').play();
 
 		handStartChips = localPlayer.chips;
 		localFolded = false;
@@ -403,7 +403,7 @@ class PlayState extends BackgrndState
 		for (i in 0...localPlayer.holeCards.length)
 		{
 			var card = new Card();
-			card.x = 90 + (i * 125);
+			card.x = 90 + (i * 100);
 			card.y = FlxG.height;
 			card.z = 90;
 			add(card);
@@ -438,7 +438,7 @@ class PlayState extends BackgrndState
 		add(card);
 		communityCardSprites.push(card);
 
-		card.x = 396.0 + index * 125;
+		card.x = 396.0 + index * 100;
 		var restY = 310.0;
 		card.z = -150;
 
@@ -453,6 +453,7 @@ class PlayState extends BackgrndState
 
 		card.y = restY - 400;
 		FlxTween.tween(card, { y: restY }, 0.4, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
+			FlxG.sound.play('assets/sounds/drop.wav').play();
 			card.reveal(data, false);
 		}});
 
@@ -594,12 +595,21 @@ class PlayState extends BackgrndState
 			{
 				if (playerWon)
 				{
+					FlxTween.tween(MusicManager.gameMusic, {volume: 0}, 1.5);
+					FlxTimer.wait(0.5, () -> FlxG.sound.play("assets/sounds/win.wav").play());
+
 					for (s in dealerSprites)
 					{
+						if (s == null)
+							continue;
+
 						s?.preLose();
-						FlxTimer.wait(1.5, () -> s?.lose());
-						FlxTimer.wait(2, () -> {
-							FlxFlicker.flicker(s, 1, 0.04, false);
+						FlxTimer.wait(2.5, () -> {
+							FlxG.sound.play("assets/sounds/Shotgun Reload.wav").play();
+						});
+						FlxTimer.wait(3.2, () -> {
+							FlxG.sound.play("assets/sounds/SHOT.wav").play();
+							s?.lose();
 						});
 					}
 				}
@@ -607,7 +617,22 @@ class PlayState extends BackgrndState
 				{
 					for (s in dealerSprites)
 						s?.win();
+
+					FlxTween.tween(MusicManager.gameMusic, {pitch: 0}, 2.5);
+
+					FlxTimer.wait(4.75, () -> {
+						FlxG.sound.play("assets/sounds/SHOT.wav").play();
+						var spr = new FlxSprite();
+						spr.makeGraphic(1,1, 0xFFFF0000);
+						spr.setGraphicSize(1280*2, 720*2);
+						spr.screenCenter();
+						MusicManager.gameMusic.volume = 0;
+						MusicManager.gameMusic.pitch = 1;
+						insert(1000, spr);
+						FlxTween.color(spr, 0.5, 0xFFFF0000, 0xFF000000, {ease: FlxEase.quadIn});
+					});
 				}
+				persistentUpdate = true;
 				openSubState(new GameOverSubState(playerWon));
 			}
 			else

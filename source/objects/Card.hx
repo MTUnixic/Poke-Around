@@ -1,6 +1,7 @@
 package objects;
 
 import backend.flixel.FlxThreeSprite;
+import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import util.CardUtil.CardData;
@@ -34,7 +35,9 @@ class Card extends FlxThreeSprite
 			return;
 		}
 
-		var pW = width*0.8, pH = height*0.8;
+		FlxG.sound.play('assets/sounds/open${FlxG.random.int(1,3)}.wav').play();
+
+		var pW = width, pH = height;
 
 		FlxTween.tween(this, { angleY: 90 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
 			loadSuitSprite(this.data);
