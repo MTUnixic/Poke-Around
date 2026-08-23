@@ -5,9 +5,11 @@ import flixel.FlxSprite;
 import flixel.FlxSubState;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import lime.system.System;
 import util.MenuUtil;
+import util.MouseUtil;
 
 // Basically MainMenu but cloned to be the Pause Menu
 class PauseMenu extends FlxSubState
@@ -36,6 +38,11 @@ class PauseMenu extends FlxSubState
 		menu.addConfirmOption('Close Game', () -> System.exit(0));
 		menu.addConfirmOption('Exit To Menu', () -> FlxG.switchState(MainMenu.new));
 
+		FlxTween.tween(FlxG.camera, { zoom: 1.0 }, 0.5, {
+			ease: FlxEase.quadOut,
+			type: PERSIST
+		});
+
 		add(bg);
 		add(buttonGroup);
 	}
@@ -43,6 +50,8 @@ class PauseMenu extends FlxSubState
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+
 		menu.updateLoop();
+		MouseUtil.mouseCamera(48);
 	}
 }

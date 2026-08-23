@@ -1,9 +1,9 @@
 package util;
 
-import flixel.FlxG;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import util.MouseUtil;
 
 /** made this since i saw a bunch of repeated utils so i merged them into one menuutil cuz clean -MT **/
 class MenuUtil
@@ -57,7 +57,7 @@ class MenuUtil
             return;
 
         for (item in buttonGroup)
-            if (FlxG.mouse.overlaps(item) && FlxG.mouse.justPressed)
+            if (MouseUtil.justClicked(item))
 				confirm(item.text);
     }
 

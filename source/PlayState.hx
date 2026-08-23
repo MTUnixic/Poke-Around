@@ -2,24 +2,20 @@ package;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.ui.FlxButton;
-import flixel.util.FlxTimer.FlxTimerManager;
 import flixel.util.FlxTimer;
 import menus.PauseMenu;
+import objects.Briefcase;
 import objects.Card;
-import objects.PlayerSprite;
-import objects.Table.PlayerAction;
-import objects.Table.PokerPlayer;
-import objects.Table.ShowdownResult;
+import objects.DealerSprite;
 import objects.Table;
 import util.CardUtil.CardData;
+import util.MouseUtil;
 import util.SpriteButtonUtil;
 
-class PlayState extends CoolBG
+class PlayState extends BackgrndState
 {
 	static inline var ACTION_BTN_FRAME_W = 70;
 	static inline var ACTION_BTN_FRAME_H = 50;
@@ -56,12 +52,17 @@ class PlayState extends CoolBG
 	var raiseAmountText:FlxText;
 	var raiseConfirmBtn:SpriteButtonUtil;
 
+	var briefcase:Briefcase;
+
 	var pendingRaiseBB:Int = 1;
 	var pauseButton:FlxSprite;
 
-	var playerSprites:Array<PlayerSprite> = [];
+	var dealerSprites:Array<DealerSprite> = [];
 
 	var timers:FlxTimerManager;
+
+	var lastBriefcaseHover:Bool = false;
+	var breifcaseUpdatable:Bool = true;
 
 	override public function create()
 	{
@@ -70,13 +71,16 @@ class PlayState extends CoolBG
 		timers = new FlxTimerManager();
 		add(timers);
 
-		potText = new FlxText(590 - 60, 260 + 130, 200, "Pot: 0", 20);
+		potText = new FlxText(600, 420, 200, "Pot: 0", 20);
+		potText.color = 0xffcdf7e2;
 		add(potText);
 
-		chipsText = new FlxText(120, 200, 300, "Chips: 0", 20);
+		chipsText = new FlxText(25, 60, 300, "Chips: 0", 20);
+		chipsText.color = 0xff3b1725;
 		add(chipsText);
 
 		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
+		streetText.color = 0xff3b1725;
 		add(streetText);
 
 		var actionRowWidth = ACTION_BTN_W * 3 + ACTION_BTN_GAP * 2;
@@ -161,13 +165,17 @@ class PlayState extends CoolBG
 				enableHumanActionButtons();
 		});
 		raiseConfirmBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
-		raiseConfirmBtn.animation.add("button", [2]);
-		raiseConfirmBtn.animation.play("button");
+		raiseConfirmBtn.animation.add("bet", [2]);
+		raiseConfirmBtn.animation.add("raise", [4]); // TODO: make functionality for bet and raise pls -MT
+		raiseConfirmBtn.animation.play("bet");
 		raiseConfirmBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
 		raiseConfirmBtn.updateHitbox();
 		add(raiseConfirmBtn);
 
 		disableActionButtons();
+
+		briefcase = new Briefcase(FlxG.width-240, FlxG.height-120);
+		add(briefcase);
 
 		table = new Table();
 		table.timerManager = timers;
@@ -175,10 +183,10 @@ class PlayState extends CoolBG
 		table.addPlayer("You", Local);
 		var dealerIndex = table.addPlayer("Dealer", Bot);
 
-		var botPlayer = new PlayerSprite();
+		var botPlayer = new DealerSprite();
 		botPlayer.x = FlxG.width/2 - botPlayer.width/2;
 		botPlayer.y = 70;
-		playerSprites[dealerIndex] = botPlayer;
+		dealerSprites[dealerIndex] = botPlayer;
 		insert(90, botPlayer);
 
 		localPlayer = table.players[table.localSeat];
@@ -195,7 +203,7 @@ class PlayState extends CoolBG
 
 		pauseButton = new SpriteButtonUtil(0, 8, null, () -> openSubState(new PauseMenu()));
 		pauseButton.loadGraphic('assets/images/pokuhbuttonssmall.png', true, 50, 50);
-		pauseButton.animation.add("button", [2]);
+		pauseButton.animation.add("button", [3]);
 		pauseButton.animation.play("button");
 		pauseButton.x = FlxG.width - pauseButton.width - 8;
 		add(pauseButton);
@@ -204,6 +212,30 @@ class PlayState extends CoolBG
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
+
+		MouseUtil.mouseCamera(36, 1.025);
+		doBreifcase();
+	}
+
+	function doBreifcase():Void // brought back breifcase + code looked like ahh so i cleaned it up -MT
+	{
+		if (!breifcaseUpdatable) return;
+		if (FlxG.mouse.overlaps(briefcase) == lastBriefcaseHover) return;
+
+		lastBriefcaseHover = FlxG.mouse.overlaps(briefcase);
+		breifcaseUpdatable = false;
+
+		if (FlxG.mouse.overlaps(briefcase)) {
+			FlxTween.tween(briefcase, {y: FlxG.height-140}, 0.75, {
+				ease: FlxEase.quadOut,
+				onComplete: function(tween:FlxTween) breifcaseUpdatable = true
+			});
+		} else {
+			FlxTween.tween(briefcase, {y: FlxG.height-120}, 0.5, {
+				ease: FlxEase.quadIn,
+				onComplete: function(tween:FlxTween) breifcaseUpdatable = true
+			});
+		}
 	}
 
 	function onDeal()
@@ -214,7 +246,7 @@ class PlayState extends CoolBG
 		for (i in 0...localPlayer.holeCards.length)
 		{
 			var card = new Card();
-			card.x = 90 + (i * 150);
+			card.x = 90 + (i * 100);
 			card.y = FlxG.height;
 			card.z = 90;
 			add(card);
@@ -222,7 +254,7 @@ class PlayState extends CoolBG
 
 			var data = localPlayer.holeCards[i];
 
-			FlxTween.tween(card, { y: FlxG.height - card.height - 70 }, 0.75, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
+			FlxTween.tween(card, { y: FlxG.height - card.height - 10 }, 0.75, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
 				card.reveal(data, true);
 			}});
 		}
@@ -235,7 +267,7 @@ class PlayState extends CoolBG
 			if (plr.isOut)
 				continue;
 
-			var plrSprite = playerSprites[table.players.indexOf(plr)];
+			var plrSprite = dealerSprites[table.players.indexOf(plr)];
 			plrSprite?.grabCard();
 		}
 
@@ -275,6 +307,22 @@ class PlayState extends CoolBG
 
 	function onTurnChanged(seat:Int)
 	{
+		if (table.players[seat].isBot) { // idk why it doesnt run once and never again, its supposed to change color when the turn changes to show who's turn it is. help pls -MT
+			FlxTween.tween(squa, {color: 0xfffa6a0a}, 1.0, {
+				ease: FlxEase.circOut, type: PERSIST
+			});
+			FlxTween.tween(glow, {color: 0xfffa6a0a}, 1.0, {
+				ease: FlxEase.circOut, type: PERSIST
+			});
+		} else {
+			FlxTween.tween(squa, {color: 0xff6d758d}, 1.0, {
+				ease: FlxEase.circOut, type: PERSIST
+			});
+			FlxTween.tween(glow, {color: 0xff6d758d}, 1.0, {
+				ease: FlxEase.circOut, type: PERSIST
+			});
+		}
+
 		if (seat < 0 || table.players[seat].isBot)
 			disableActionButtons();
 		else
@@ -286,11 +334,11 @@ class PlayState extends CoolBG
 		switch (action)
 		{
 			case Fold:
-				playerSprites[seat]?.fold();
+				dealerSprites[seat]?.fold();
 			case Check, Call:
-				playerSprites[seat]?.call();
+				dealerSprites[seat]?.call();
 			case Bet(t), Raise(t):
-				playerSprites[seat]?.raise(t, t >= table.players[seat].chips);
+				dealerSprites[seat]?.raise(t, t >= table.players[seat].chips);
 		}
 
 		if (seat == table.localSeat)

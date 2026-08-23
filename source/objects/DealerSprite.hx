@@ -1,10 +1,7 @@
 package objects;
 
-import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.group.FlxSpriteContainer.FlxTypedSpriteContainer;
-import flixel.math.FlxRandom;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -12,9 +9,9 @@ import flixel.util.FlxTimer;
 
 using flixel.graphics.FlxAsepriteUtil;
 
-class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
+class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 {
-	var playerSprite:FlxSprite;
+	var sprite:FlxSprite;
 	var idleTimer:Float = 0.0;
 
 	var postAnimTimer:FlxTimer;
@@ -23,23 +20,23 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		super(x, y);
 
-		playerSprite = new FlxSprite();
-		playerSprite.loadAseAtlasAndTagsByIndex("assets/images/pokah-dealer.png", "assets/images/pokah-dealer.json");
-		playerSprite.animation.getByName("ToThink").looped = false;
-		playerSprite.animation.getByName("ToLook").looped = false;
-		playerSprite.animation.getByName("GrabCard").looped = false;
-		playerSprite.animation.getByName("SlamAllIn").looped = false;
-		playerSprite.animation.getByName("TossRaise").looped = false;
-		playerSprite.animation.play("Idle");
-		playerSprite.setGraphicSize(playerSprite.width * 2.5, playerSprite.height * 2.5);
-		add(playerSprite);
+		sprite = new FlxSprite();
+		sprite.loadAseAtlasAndTagsByIndex("assets/images/pokah-dealer.png", "assets/images/pokah-dealer.json");
+		sprite.animation.getByName("ToThink").looped = false;
+		sprite.animation.getByName("ToLook").looped = false;
+		sprite.animation.getByName("GrabCard").looped = false;
+		sprite.animation.getByName("SlamAllIn").looped = false;
+		sprite.animation.getByName("TossRaise").looped = false;
+		sprite.animation.play("Idle");
+		sprite.setGraphicSize(sprite.width * 2.5, sprite.height * 2.5);
+		add(sprite);
 	}
 
 	override function update(elapsed:Float)
 	{
 		idleTimer -= elapsed;
 		if (idleTimer <= 0)
-			playerSprite.animation.play("Idle");
+			sprite.animation.play("Idle");
 
 		super.update(elapsed);
 	}
@@ -56,9 +53,9 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	function postAnim(animName:String)
 	{
 		cancelTimer();
-		postAnimTimer = FlxTimer.wait(playerSprite.animation.curAnim.frameDuration * playerSprite.animation.curAnim.frames.length, () ->
+		postAnimTimer = FlxTimer.wait(sprite.animation.curAnim.frameDuration * sprite.animation.curAnim.frames.length, () ->
 		{
-			var anim = playerSprite.animation.getByName(animName);
+			var anim = sprite.animation.getByName(animName);
 			if (anim == null)
 				return;
 		});
@@ -66,8 +63,9 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 
 	public function spawnHint(hint:String)
 	{
-		var txt = new FlxText(playerSprite.width + 60, 60, 200, hint, 16);
-		/* TODO: doesnt work for some reason
+		var txt = new FlxText(sprite.width + 100, 80, 200, hint, 16);
+		txt.color = 0xff6d758d;
+		/* TODO: doesnt work for some reason:
 		txt.velocity.x = FlxG.random.float(-90, 90);
 		txt.velocity.y = -200;
 		txt.acceleration.y = 70;
@@ -89,7 +87,7 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		cancelTimer();
 		idleTimer = 1.5;
-		playerSprite.animation.play("Call");
+		sprite.animation.play("Call");
 		spawnHint("Called");
 	}
 
@@ -99,14 +97,14 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		if (allIn)
 		{
 			idleTimer = 20;
-			playerSprite.animation.play("SlamAllIn");
+			sprite.animation.play("SlamAllIn");
 			postAnim("AllIn");
 			spawnHint('ALL IN WITH $$${target}!');
 		}
 		else
 		{
 			idleTimer = 0.5;
-			playerSprite.animation.play("TossRaise");
+			sprite.animation.play("TossRaise");
 			spawnHint('Raised to $$${target}');
 		}
 	}
@@ -115,7 +113,7 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		cancelTimer();
 		idleTimer = 1.5;
-		playerSprite.animation.play("Fold");
+		sprite.animation.play("Fold");
 		spawnHint("Folded");
 	}
 
@@ -123,7 +121,7 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		cancelTimer();
 		idleTimer = Math.POSITIVE_INFINITY;
-		playerSprite.animation.play("ToThink");
+		sprite.animation.play("ToThink");
 		postAnim("Think");
 	}
 
@@ -131,14 +129,14 @@ class PlayerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	{
 		cancelTimer();
 		idleTimer = 0.7;
-		playerSprite.animation.play("GrabCard");
+		sprite.animation.play("GrabCard");
 	}
 
 	public function look()
 	{
 		cancelTimer();
 		idleTimer = 1.5;
-		playerSprite.animation.play("ToLook");
+		sprite.animation.play("ToLook");
 		postAnim("Look");
 	}
 }

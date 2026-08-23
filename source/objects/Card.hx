@@ -16,6 +16,7 @@ class Card extends FlxThreeSprite
     	this.data = data;
 
 		loadGraphic("assets/images/cards/card-back.png", true, 88, 124);
+		setGraphicSize(width*0.8, height*0.8);
 		animation.add("back-a", [0]);
 		animation.add("back-b", [1]);
 
@@ -35,6 +36,7 @@ class Card extends FlxThreeSprite
 
 		FlxTween.tween(this, { angleY: 90 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
 			loadSuitSprite(this.data);
+			setGraphicSize(width*0.8, height*0.8);
 			this.angleY = -90;
 			FlxTween.tween(this, { angleY: 0 }, 0.5, { ease: FlxEase.quadOut });
 		}});

@@ -5,7 +5,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 1.aseprite": {
     "frame": { "x": 131, "y": 1, "w": 128, "h": 128 },
@@ -13,7 +13,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 2.aseprite": {
     "frame": { "x": 261, "y": 1, "w": 128, "h": 144 },
@@ -21,7 +21,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 128, "h": 144 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 3.aseprite": {
     "frame": { "x": 391, "y": 1, "w": 128, "h": 128 },
@@ -29,7 +29,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 4.aseprite": {
     "frame": { "x": 521, "y": 1, "w": 112, "h": 128 },
@@ -37,7 +37,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 16, "w": 112, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 5.aseprite": {
     "frame": { "x": 635, "y": 1, "w": 96, "h": 112 },
@@ -45,7 +45,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 32, "w": 96, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 6.aseprite": {
     "frame": { "x": 733, "y": 1, "w": 96, "h": 112 },
@@ -53,7 +53,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 32, "w": 96, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 7.aseprite": {
     "frame": { "x": 831, "y": 1, "w": 144, "h": 128 },
@@ -61,7 +61,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 8.aseprite": {
     "frame": { "x": 977, "y": 1, "w": 160, "h": 128 },
@@ -69,7 +69,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 160, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 9.aseprite": {
     "frame": { "x": 1139, "y": 1, "w": 144, "h": 128 },
@@ -77,7 +77,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 10.aseprite": {
     "frame": { "x": 1285, "y": 1, "w": 144, "h": 128 },
@@ -85,7 +85,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 11.aseprite": {
     "frame": { "x": 1431, "y": 1, "w": 144, "h": 144 },
@@ -93,7 +93,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 144, "h": 144 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 12.aseprite": {
     "frame": { "x": 1577, "y": 1, "w": 144, "h": 128 },
@@ -101,7 +101,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 13.aseprite": {
     "frame": { "x": 1723, "y": 1, "w": 144, "h": 160 },
@@ -109,7 +109,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 144, "h": 160 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 14.aseprite": {
     "frame": { "x": 1869, "y": 1, "w": 144, "h": 160 },
@@ -117,7 +117,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 144, "h": 160 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 15.aseprite": {
     "frame": { "x": 2015, "y": 1, "w": 144, "h": 160 },
@@ -125,7 +125,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 144, "h": 160 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 16.aseprite": {
     "frame": { "x": 2161, "y": 1, "w": 128, "h": 144 },
@@ -133,7 +133,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 144 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 17.aseprite": {
     "frame": { "x": 2291, "y": 1, "w": 128, "h": 128 },
@@ -141,7 +141,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 18.aseprite": {
     "frame": { "x": 2421, "y": 1, "w": 128, "h": 128 },
@@ -149,7 +149,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 19.aseprite": {
     "frame": { "x": 2551, "y": 1, "w": 128, "h": 128 },
@@ -157,7 +157,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 20.aseprite": {
     "frame": { "x": 2681, "y": 1, "w": 112, "h": 112 },
@@ -165,7 +165,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 32, "w": 112, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 21.aseprite": {
     "frame": { "x": 2795, "y": 1, "w": 80, "h": 128 },
@@ -173,7 +173,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 32, "y": 16, "w": 80, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 22.aseprite": {
     "frame": { "x": 2877, "y": 1, "w": 80, "h": 112 },
@@ -181,7 +181,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 32, "y": 32, "w": 80, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 23.aseprite": {
     "frame": { "x": 2959, "y": 1, "w": 80, "h": 112 },
@@ -189,7 +189,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 32, "y": 32, "w": 80, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 24.aseprite": {
     "frame": { "x": 3041, "y": 1, "w": 144, "h": 128 },
@@ -197,7 +197,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 25.aseprite": {
     "frame": { "x": 3187, "y": 1, "w": 144, "h": 112 },
@@ -205,7 +205,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 144, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 26.aseprite": {
     "frame": { "x": 3333, "y": 1, "w": 144, "h": 128 },
@@ -213,7 +213,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 27.aseprite": {
     "frame": { "x": 3479, "y": 1, "w": 144, "h": 128 },
@@ -221,7 +221,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 16, "w": 144, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 28.aseprite": {
     "frame": { "x": 3625, "y": 1, "w": 128, "h": 112 },
@@ -229,7 +229,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 29.aseprite": {
     "frame": { "x": 3755, "y": 1, "w": 112, "h": 128 },
@@ -237,7 +237,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 16, "y": 32, "w": 112, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 30.aseprite": {
     "frame": { "x": 3869, "y": 1, "w": 128, "h": 112 },
@@ -245,7 +245,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 31.aseprite": {
     "frame": { "x": 3999, "y": 1, "w": 128, "h": 112 },
@@ -253,7 +253,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 32.aseprite": {
     "frame": { "x": 4129, "y": 1, "w": 128, "h": 112 },
@@ -261,7 +261,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 33.aseprite": {
     "frame": { "x": 4259, "y": 1, "w": 128, "h": 112 },
@@ -269,7 +269,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 34.aseprite": {
     "frame": { "x": 4389, "y": 1, "w": 128, "h": 112 },
@@ -277,7 +277,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 32, "w": 128, "h": 112 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 35.aseprite": {
     "frame": { "x": 4519, "y": 1, "w": 128, "h": 144 },
@@ -285,7 +285,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 144 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 36.aseprite": {
     "frame": { "x": 4649, "y": 1, "w": 112, "h": 128 },
@@ -293,7 +293,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 32, "y": 16, "w": 112, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    },
    "pokuh 37.aseprite": {
     "frame": { "x": 4763, "y": 1, "w": 112, "h": 128 },
@@ -301,7 +301,7 @@
     "trimmed": true,
     "spriteSourceSize": { "x": 32, "y": 16, "w": 112, "h": 128 },
     "sourceSize": { "w": 146, "h": 161 },
-    "duration": 100
+    "duration": 125
    }
  },
  "meta": {
