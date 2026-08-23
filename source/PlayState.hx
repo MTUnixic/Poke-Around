@@ -2,6 +2,7 @@ package;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.effects.FlxFlicker;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -211,8 +212,10 @@ class PlayState extends BackgrndState
 
 		for (i in 0...3)
 		{
-			var itemCard = new ItemCard(30 + i * 70, 50);
-			briefcase.add(itemCard);
+			var itemCard = new ItemCard(50 + i * 50, 2);
+			itemCard.alpha = 0;
+			FlxTimer.wait(0.8 + i * 0.25, () -> FlxTween.tween(itemCard, {alpha: 1}, 0.5, {ease: FlxEase.quadOut}));
+			briefcase.addCard(itemCard);
 			playerItems.push(itemCard);
 		}
 		itemHovered = [for (_ in playerItems) false];
@@ -406,7 +409,7 @@ class PlayState extends BackgrndState
 
 			var data = localPlayer.holeCards[i];
 
-			FlxTween.tween(card, { y: FlxG.height - card.height - 10 }, 0.75, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
+			FlxTween.tween(card, { y: FlxG.height - card.height - 30 }, 0.75, { ease: FlxEase.quadOut, onComplete: function(tween:FlxTween) {
 				card.reveal(data, true);
 			}});
 		}
@@ -586,7 +589,25 @@ class PlayState extends BackgrndState
 			var playerLost = localPlayer.chips <= 0 || opponent.chips >= 2400;
 
 			if (playerWon || playerLost)
+			{
+				if (playerWon)
+				{
+					for (s in dealerSprites)
+					{
+						s?.preLose();
+						FlxTimer.wait(1.5, () -> s?.lose());
+						FlxTimer.wait(2, () -> {
+							FlxFlicker.flicker(s, 1, 0.04, false);
+						});
+					}
+				}
+				else
+				{
+					for (s in dealerSprites)
+						s?.win();
+				}
 				openSubState(new GameOverSubState(playerWon));
+			}
 			else
 				table.startHand();
 		});

@@ -28,6 +28,7 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		sprite.animation.getByName("GrabCard").looped = false;
 		sprite.animation.getByName("SlamAllIn").looped = false;
 		sprite.animation.getByName("TossRaise").looped = false;
+		sprite.animation.getByName("Lose").looped = false;
 		sprite.animation.play("Idle");
 		sprite.setGraphicSize(sprite.width * 2.5, sprite.height * 2.5);
 		add(sprite);
@@ -140,5 +141,26 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 		idleTimer = 1.5;
 		sprite.animation.play("ToLook");
 		postAnim("Look");
+	}
+
+	public function preLose()
+	{
+		cancelTimer();
+		idleTimer = Math.POSITIVE_INFINITY;
+		sprite.animation.play("Fold");
+	}
+
+	public function lose()
+	{
+		cancelTimer();
+		idleTimer = Math.POSITIVE_INFINITY;
+		sprite.animation.play("Lose");
+	}
+
+	public function win()
+	{
+		cancelTimer();
+		idleTimer = Math.POSITIVE_INFINITY;
+		sprite.animation.play("Win");
 	}
 }
