@@ -1,8 +1,15 @@
 package menus;
 
 import flixel.FlxG;
+import flixel.addons.transition.FlxTransitionSprite.GraphicTransTileDiamond;
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.addons.transition.TransitionData;
+import flixel.graphics.FlxGraphic;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.math.FlxPoint;
+import flixel.math.FlxRect;
 import flixel.text.FlxText;
+import flixel.util.FlxColor;
 import lime.system.System;
 import util.MenuUtil;
 import util.MouseUtil;
@@ -14,6 +21,16 @@ class MainMenu extends BackgrndState
 
 	override function create()
 	{
+
+		var diamond:FlxGraphic = FlxGraphic.fromClass(GraphicTransTileDiamond);
+		diamond.persist = true;
+		diamond.destroyOnNoUse = false;
+
+		var screenRegion = new FlxRect(0, 0, FlxG.width, FlxG.height);
+
+		FlxTransitionableState.defaultTransIn = new TransitionData(TILES, FlxColor.BLACK, 0.5, FlxPoint.get(1,0), {asset: diamond, width: 32, height: 32}, screenRegion);
+		FlxTransitionableState.defaultTransOut = new TransitionData(TILES, FlxColor.BLACK, 0.5, FlxPoint.get(1,0), {asset: diamond, width: 32, height: 32}, screenRegion);
+
 		super.create();
 
 		remove(glow, true);
@@ -25,7 +42,7 @@ class MainMenu extends BackgrndState
 		buttonGroup = new FlxTypedGroup<FlxText>();
 
 		menu.makeButtonGroup(buttonGroup);
-		menu.addConfirmOption('Play', () -> FlxG.switchState(PlayState.new));
+		menu.addConfirmOption('Play', () -> FlxG.switchState(() -> new PlayState()));
 		menu.addConfirmOption('Test Pause', () -> openSubState(new PauseMenu()));
 		menu.addConfirmOption('Quit Game', () -> System.exit(0));
 		add(buttonGroup);
@@ -46,7 +63,7 @@ class MainMenu extends BackgrndState
 		super.update(elapsed);
 		
 		if (FlxG.keys.justPressed.NINE)
-			FlxG.switchState(CharacterTestState.new);
+			FlxG.switchState(() -> new CharacterTestState());
 		
 		menu.updateLoop();
 		MouseUtil.mouseCamera(24, 1.1);

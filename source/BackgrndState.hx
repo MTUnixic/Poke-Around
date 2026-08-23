@@ -3,8 +3,9 @@ package;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.addons.display.FlxBackdrop;
+import flixel.addons.transition.FlxTransitionableState;
 
-class BackgrndState extends FlxState
+class BackgrndState extends FlxTransitionableState
 {
     public var glow:FlxSprite;
 
@@ -15,9 +16,8 @@ class BackgrndState extends FlxState
     
     public var squa:FlxBackdrop;
     
-    override function create() {
-        super.create();
-
+    override function create()
+    {
         final bg = new FlxSprite();
         bg.loadGraphic('assets/images/coolbg/pokuhbg.png');
         bg.screenCenter();
@@ -52,6 +52,8 @@ class BackgrndState extends FlxState
         glow.loadGraphic('assets/images/coolbg/pokuhbgglow.png');
         glow.alpha = scratchGhost2Flixel(40);
         add(glow);
+        
+        super.create();
     }
 
     /** too lazy to do the math **/

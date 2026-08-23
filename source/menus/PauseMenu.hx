@@ -36,7 +36,7 @@ class PauseMenu extends FlxSubState
 		menu.addConfirmOption('Resume', () -> close());
 		menu.addConfirmOption('Restart', () -> FlxG.resetState());
 		menu.addConfirmOption('Close Game', () -> System.exit(0));
-		menu.addConfirmOption('Exit To Menu', () -> FlxG.switchState(MainMenu.new));
+		menu.addConfirmOption('Exit To Menu', () -> FlxG.switchState(() -> new MainMenu()));
 
 		FlxTween.tween(FlxG.camera, { zoom: 1.0 }, 0.5, {
 			ease: FlxEase.quadOut,

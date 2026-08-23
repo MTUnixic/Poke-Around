@@ -1,11 +1,11 @@
 package menus;
 
 import flixel.FlxG;
-import flixel.FlxState;
+import flixel.addons.transition.FlxTransitionableState;
 import flixel.text.FlxText;
 import objects.DealerSprite;
 
-class CharacterTestState extends FlxState
+class CharacterTestState extends FlxTransitionableState
 {
 	var dealer:DealerSprite;
 	var txt:FlxText;
@@ -43,7 +43,7 @@ class CharacterTestState extends FlxState
 			dealer.sprite.animation.play(animNames[curI], true);
 		}
 		else if(FlxG.keys.justPressed.ESCAPE)
-			FlxG.switchState(MainMenu.new);
+			FlxG.switchState(() -> new MainMenu());
 
 		txt.text = 'Anim: ${animNames[curI]}';
 	}
