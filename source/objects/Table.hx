@@ -132,7 +132,6 @@ class Table
 			if (!p.folded)
 				p.holeCards = [deck.pop(), deck.pop()];
 
-		trace('New hand. Dealer seat $dealerSeat.');
 		onDeal();
 
 		var sbSeat = nextOccupiedSeat(dealerSeat);
@@ -197,7 +196,6 @@ class Table
 		}
 
 		actedThisRound[seat] = true;
-		trace('${p.name} -> ${actionLabel(action)} | bet=${p.currentBet} chips=${p.chips} pot=$pot');
 		onPlayerActed(seat, action);
 
 		advanceTurn();
@@ -278,10 +276,7 @@ class Table
 		pot += actual;
 
 		if (p.chips <= 0)
-		{
 			p.isAllIn = true;
-			trace('${p.name} IS ALL IN WITH ${p.currentBet}');
-		}
 
 		onPotChanged();
 	}

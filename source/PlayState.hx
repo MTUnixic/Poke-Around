@@ -44,6 +44,8 @@ class PlayState extends BackgrndState
 	var chipsText:FlxText;
 	var streetText:FlxText;
 
+	var historyTexts:Array<FlxText> = [];
+
 	var foldBtn:SpriteButtonUtil;
 	var checkCallBtn:SpriteButtonUtil;
 	var callAmountText:FlxText;
@@ -77,11 +79,11 @@ class PlayState extends BackgrndState
 		add(potText);
 
 		chipsText = new FlxText(25, 60, 300, "Chips: 0", 20);
-		chipsText.color = 0xff3b1725;
+		chipsText.color = 0xff6d2c45;
 		add(chipsText);
 
 		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
-		streetText.color = 0xff3b1725;
+		streetText.color = 0xff6d2c45;
 		add(streetText);
 
 		var actionRowWidth = ACTION_BTN_W * 3 + ACTION_BTN_GAP * 2;
@@ -181,7 +183,7 @@ class PlayState extends BackgrndState
 		table = new Table();
 		table.timerManager = timers;
 
-		table.addPlayer("You", Local);
+		table.addPlayer("Player", Local);
 		var dealerIndex = table.addPlayer("Dealer", Bot);
 
 		var botPlayer = new DealerSprite();
@@ -241,6 +243,8 @@ class PlayState extends BackgrndState
 
 	function onDeal()
 	{
+		addHistoryText("New hand dealt.");
+
 		killHoleCards();
 		killCommunityCards();
 
@@ -352,6 +356,8 @@ class PlayState extends BackgrndState
 
 	function onPlayerActed(seat:Int, action:PlayerAction)
 	{
+		var p = table.players[seat];
+
 		switch (action)
 		{
 			case Fold:
@@ -359,7 +365,7 @@ class PlayState extends BackgrndState
 			case Check, Call:
 				dealerSprites[seat]?.call();
 			case Bet(t), Raise(t):
-				dealerSprites[seat]?.raise(t, t >= table.players[seat].chips);
+				dealerSprites[seat]?.raise(t, t >= p.chips);
 		}
 
 		if (seat == table.localSeat)
@@ -369,6 +375,18 @@ class PlayState extends BackgrndState
 				default:
 			}
 
+		addHistoryText(switch (action)
+		{
+			case Fold: '${p.name} folds';
+			case Check: '${p.name} checks';
+			case Call: '${p.name} calls';
+			case Bet(target): '${p.name} bets $$$target';
+			case Raise(target): '${p.name} raises to $$$target';
+		});
+
+		if (p.isAllIn)
+			addHistoryText('${p.name} is all in with $$${p.currentBet}!');
+
 		refreshChipsText();
 	}
 
@@ -376,9 +394,10 @@ class PlayState extends BackgrndState
 	{
 		disableActionButtons();
 		if (results.length == 0)
-			trace("Hand over");
+			addHistoryText("Hand over.");
 		else
-			trace([for (r in results) '${r.name} wins ${r.winnings} (${r.handText})'].join("\n"));
+			for (r in results)
+				addHistoryText('${r.name} wins $$${r.winnings} (${r.handText})');
 	}
 
 	function onHandOver()
@@ -419,6 +438,29 @@ class PlayState extends BackgrndState
 		chipsText.text = 'Chips: ${localPlayer.chips}';
 	}
 
+	function addHistoryText(msg:String)
+	{
+		for (t in historyTexts)
+			FlxTween.tween(t, {y: t.y - 22}, 0.3, {ease: FlxEase.quadOut});
+
+		var text = new FlxText(40, FlxG.height - 170, /*260*/400, msg, 16);
+		text.color = 0xffcdf7e2;
+		text.alpha = 0;
+		add(text);
+		historyTexts.push(text);
+
+		FlxTween.tween(text, {alpha: 1}, 0.2, {ease: FlxEase.quadOut});
+
+		new FlxTimer(timers).start(3.0, (_) ->
+		{
+			FlxTween.tween(text, {alpha: 0}, 0.5, {ease: FlxEase.quadIn, onComplete: (_) ->
+			{
+				historyTexts.remove(text);
+				text.destroy();
+			}});
+		});
+	}
+
 	function enableHumanActionButtons()
 	{
 		var toCall = table.currentBet - localPlayer.currentBet;
@@ -438,18 +480,22 @@ class PlayState extends BackgrndState
 
 		foldBtn.visible = foldBtn.active = true;
 		checkCallBtn.visible = checkCallBtn.active = true;
+		callAmountText.visible = true;
 		raiseMinusBtn.visible = raiseMinusBtn.active = true;
 		raisePlusBtn.visible = raisePlusBtn.active = true;
 		raiseConfirmBtn.visible = raiseConfirmBtn.active = true;
+		raiseAmountText.visible = true;
 	}
 
 	function disableActionButtons()
 	{
 		foldBtn.visible = foldBtn.active = false;
 		checkCallBtn.visible = checkCallBtn.active = false;
+		callAmountText.visible = false;
 		raiseMinusBtn.visible = raiseMinusBtn.active = false;
 		raisePlusBtn.visible = raisePlusBtn.active = false;
 		raiseConfirmBtn.visible = raiseConfirmBtn.active = false;
+		raiseAmountText.visible = false;
 	}
 
 	function updateRaiseAmountText()
