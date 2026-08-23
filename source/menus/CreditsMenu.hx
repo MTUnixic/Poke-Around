@@ -14,6 +14,8 @@ import flixel.util.FlxColor;
 import util.MenuUtil;
 import util.MouseUtil;
 
+using StringTools;
+
 @:structInit private class Credited extends FlxContainer
 {
     public var iSprite = new FlxSprite();
@@ -87,13 +89,21 @@ import util.MouseUtil;
         descX = iSprite.x + 125;
         description.y = iSprite.y + 52 - 8;
         description.size = 24;
+
         color ??= 0xFF6D758D;
         description.color = color;
-        if (desc == null) {
-            desc = 'Heh, what a predictable creature.. LAST, JARONA!';
-            description.alpha = 0.5;
-        }
-        description.text = '"' + desc + '"';
+
+        desc ??= 'Heh, what a predictable creature.. LAST, JARONA!';
+
+        final isTemplate = desc.startsWith('[TEMPLATE]');
+
+        description.alpha = isTemplate ? 0.5 : 1;
+
+        if (isTemplate)
+            desc = desc.substr('[TEMPLATE]'.length);
+
+        description.text = isTemplate ? desc : '"' + desc + '"';
+
         description.x = -description.width;
     }
 
@@ -161,17 +171,17 @@ class CreditsMenu extends BackgrndState
 
         davvex87.posIcon(180, 320);
         davvex87.makeHeaderName('Davvex87', 0xFF20D6C7, 0xFF143464);
-        davvex87.makeDescription();
+        davvex87.makeDescription('HAXE! HAXE! HAXE! HAXE! HAXE! HAXE! HAXE!!');
         davvex87.addHeaderQualities(['Co-Director', 'Coder']);
 
         chungus.posIcon(180, 440);
         chungus.makeHeaderName('Besomething (be n)', 0xFFDF3E23, 0xFF422433);
-        chungus.makeDescription();
+        chungus.makeDescription('[TEMPLATE](helped with menus and background)');
         chungus.addHeaderQualities(['Coder']);
 
         codeanomaly08.posIcon(180, 560);
         codeanomaly08.makeHeaderName('Mike', 0xFF9CCB43, 0xFF24523B);
-        codeanomaly08.makeDescription();
+        codeanomaly08.makeDescription('[TEMPLATE](helped with the core poker system and initial game loop)');
         codeanomaly08.addHeaderQualities(['Coder']);
 
         add(mtunixic);
