@@ -79,6 +79,9 @@ class Table
 	var deck:Array<CardData> = [];
 	var actedThisRound:Array<Bool> = [false, false, false, false];
 
+	var doubleMinRaiseArmed:Bool = false;
+	var forcedFoldSeat:Int = -1;
+
 	public dynamic function onDeal():Void {}
 	public dynamic function onCommunityCard(data:CardData, index:Int):Void {}
 	public dynamic function onPotChanged():Void {}
@@ -107,6 +110,50 @@ class Table
 				n++;
 		return n;
 	}
+
+	public function peekNextCards(count:Int):Array<CardData>
+	{
+		var result:Array<CardData> = [];
+		var i = deck.length - 1;
+		while (result.length < count && i >= 0)
+		{
+			result.push(deck[i]);
+			i--;
+		}
+		return result;
+	}
+
+	public function addChips(seat:Int, amount:Int)
+		players[seat].chips += amount;
+
+	public function armDoubleMinRaise()
+		doubleMinRaiseArmed = true;
+
+	public function armForcedFold(seat:Int)
+		forcedFoldSeat = seat;
+
+	public function replaceWeakestHoleCard(seat:Int):Null<{index:Int, card:CardData}>
+	{
+		var p = players[seat];
+		if (p.holeCards.length < 2)
+			return null;
+
+		var weakestIndex = cardRank(p.holeCards[0]) <= cardRank(p.holeCards[1]) ? 0 : 1;
+
+		var pool = p.holeCards.concat(community);
+		var strongest = pool[0];
+		for (c in pool)
+			if (cardRank(c) > cardRank(strongest))
+				strongest = c;
+
+		var newCard:CardData = {num: strongest.num, suit: strongest.suit};
+		p.holeCards[weakestIndex] = newCard;
+
+		return {index: weakestIndex, card: newCard};
+	}
+
+	static inline function cardRank(c:CardData):Int
+		return c.num == 1 ? 14 : c.num; // ace high
 
 	public function startHand()
 	{
@@ -158,6 +205,15 @@ class Table
 		if (p.folded || p.isAllIn)
 			return false;
 
+		var minRaiseMultiplier = doubleMinRaiseArmed ? 2 : 1;
+		doubleMinRaiseArmed = false;
+
+		if (forcedFoldSeat == seat)
+		{
+			forcedFoldSeat = -1;
+			action = Fold;
+		}
+
 		switch (action)
 		{
 			case Fold:
@@ -174,21 +230,17 @@ class Table
 				postBet(seat, toCall);
 
 			case Bet(target), Raise(target):
-				var minTarget = currentBet + BIG_BLIND;
+				var minTarget = currentBet + BIG_BLIND * minRaiseMultiplier;
 				var actualTarget = Std.int(Math.max(target, minTarget));
 				var toPut = Std.int(Math.min(actualTarget - p.currentBet, p.chips));
 				if (toPut <= 0)
 					return false;
 				postBet(seat, toPut);
 
-				// An all-in that lands short of the current bet must never drag `currentBet` back
-				// down: players who already matched the higher bet would end up unable to check,
-				// call or raise, which used to freeze the hand.
 				if (p.currentBet > currentBet)
 				{
 					var isFullRaise = p.currentBet >= minTarget;
 					currentBet = p.currentBet;
-					// Only a full raise reopens the betting for players who already acted.
 					if (isFullRaise)
 						for (i in 0...players.length)
 							actedThisRound[i] = false;
@@ -241,29 +293,71 @@ class Table
 		}
 	}
 
+	// 0 (worthless) .. 1 (nuts), based on the bot's hole cards plus whatever community cards are out
+	function handStrength(seat:Int):Float
+	{
+		var cards = players[seat].holeCards.concat(community);
+
+		if (cards.length < 5)
+			return preflopStrength(players[seat].holeCards);
+
+		var combo = cards.length == 7 ? CardUtil.bestHandOf7(cards) : CardUtil.checkCombos(cards);
+		return Math.min(1, combo.rank / 9);
+	}
+
+	function preflopStrength(hole:Array<CardData>):Float
+	{
+		inline function highNum(n:Int):Int
+			return n == 1 ? 14 : n; // ace high
+
+		var r1 = highNum(hole[0].num);
+		var r2 = highNum(hole[1].num);
+		var hi = Math.max(r1, r2);
+		var lo = Math.min(r1, r2);
+		var gap = hi - lo;
+
+		var score = (hi + lo) / 28;
+		if (r1 == r2)
+			score += 0.35 + hi / 14 * 0.15;
+		if (hole[0].suit == hole[1].suit)
+			score += 0.08;
+		if (gap == 1)
+			score += 0.05;
+		else if (gap == 2)
+			score += 0.02;
+
+		return Math.min(1, score);
+	}
+
 	function botDecideAction(seat:Int):PlayerAction
 	{
 		var p = players[seat];
 		var toCall = currentBet - p.currentBet;
-		var roll = Math.random();
+		var strength = handStrength(seat);
+		var bluff = Math.random() < 0.08; // occasional bluff so strength isn't fully readable from behavior
 
 		if (toCall <= 0)
 		{
-			if (roll < 0.65)
+			var betChance = bluff ? 0.5 : strength * 0.9;
+			if (Math.random() >= betChance)
 				return Check;
 
-			var size = BIG_BLIND + Std.int(Math.random() * (pot > 0 ? pot : BIG_BLIND * 2));
+			var sizeFactor = 0.3 + strength * 0.9; // stronger hands bet bigger
+			var size = BIG_BLIND + Std.int(sizeFactor * (pot > 0 ? pot : BIG_BLIND * 2));
 			return Bet(currentBet + size);
 		}
 
-		if (roll < 0.15)
+		var potOdds = toCall / (pot + toCall);
+		if (!bluff && strength < potOdds * 1.3)
 			return Fold;
 
-		if (roll < 0.80)
-			return Call;
+		if (bluff || strength > 0.75) // top 10 random numbers i pulled from my ass
+		{
+			var raiseSize = BIG_BLIND + Std.int((0.5 + strength) * BIG_BLIND * 3);
+			return Raise(currentBet + raiseSize);
+		}
 
-		var raiseSize = BIG_BLIND + Std.int(Math.random() * BIG_BLIND * 3);
-		return Raise(currentBet + raiseSize);
+		return Call;
 	}
 
 	function postBet(seat:Int, amount:Int)

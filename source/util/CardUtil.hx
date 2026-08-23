@@ -52,6 +52,26 @@ class CardUtil
 		return best;
 	}
 
+	public static inline function formatCard(c:CardData):String
+	{
+		var rank = switch (c.num)
+		{
+			case 1: "Ace";
+			case 11: "Jack";
+			case 12: "Queen";
+			case 13: "King";
+			default: '${c.num}';
+		}
+		var suit = switch (c.suit)
+		{
+			case 0: "Clubs";
+			case 1: "Diamonds";
+			case 2: "Hearts";
+			default: "Spades";
+		}
+		return '$rank of $suit';
+	}
+
 	public static inline function formatCombo(c:{rank:Int, num1:Int, num2:Int})
 		return switch (c.rank)
 		{

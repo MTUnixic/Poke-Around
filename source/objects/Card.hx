@@ -34,9 +34,11 @@ class Card extends FlxThreeSprite
 			return;
 		}
 
+		var pW = width, pH = height;
+
 		FlxTween.tween(this, { angleY: 90 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
 			loadSuitSprite(this.data);
-			setGraphicSize(width*0.8, height*0.8);
+			setGraphicSize(pW, pH);
 			this.angleY = -90;
 			FlxTween.tween(this, { angleY: 0 }, 0.5, { ease: FlxEase.quadOut });
 		}});

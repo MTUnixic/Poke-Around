@@ -7,13 +7,15 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
+import menus.CardsRevealScreen;
 import menus.GameOverSubState;
 import menus.PauseMenu;
 import objects.Briefcase;
 import objects.Card;
 import objects.DealerSprite;
+import objects.ItemCard;
 import objects.Table;
-import util.CardUtil.CardData;
+import util.CardUtil;
 import util.MouseUtil;
 import util.SpriteButtonUtil;
 
@@ -67,6 +69,18 @@ class PlayState extends BackgrndState
 
 	var lastBriefcaseHover:Bool = false;
 	var breifcaseUpdatable:Bool = true;
+
+	var playerItems:Array<ItemCard> = [];
+	var itemHovered:Array<Bool> = [];
+
+	var handStartChips:Int = 0;
+	var localFolded:Bool = false;
+
+	var goldenBulletArmed:Bool = false;
+
+	var cardDescrBackground:FlxSprite;
+	var cardDescrIcon:FlxSprite;
+	var cardDescrText:FlxText;
 
 	override public function create()
 	{
@@ -178,7 +192,7 @@ class PlayState extends BackgrndState
 
 		disableActionButtons();
 
-		briefcase = new Briefcase(FlxG.width-240, FlxG.height-120);
+		briefcase = new Briefcase(FlxG.width-240, FlxG.height-60);
 		add(briefcase);
 
 		table = new Table();
@@ -194,7 +208,41 @@ class PlayState extends BackgrndState
 		insert(90, botPlayer);
 
 		localPlayer = table.players[table.localSeat];
-		
+
+		for (i in 0...3)
+		{
+			var itemCard = new ItemCard(30 + i * 70, 50);
+			briefcase.add(itemCard);
+			playerItems.push(itemCard);
+		}
+		itemHovered = [for (_ in playerItems) false];
+
+
+		cardDescrBackground = new FlxSprite();
+		cardDescrBackground.loadGraphic("assets/images/pokuhpopup.png");
+		cardDescrBackground.setGraphicSize(cardDescrBackground.width * 3, cardDescrBackground.height * 3);
+		cardDescrBackground.updateHitbox();
+		cardDescrBackground.x = FlxG.width - cardDescrBackground.width - 10;
+		cardDescrBackground.y = 240;
+		cardDescrBackground.alpha = 0;
+		add(cardDescrBackground);
+
+		cardDescrIcon = new FlxSprite();
+		cardDescrIcon.loadGraphic("assets/images/pokuhcaards.png", true, 64, 80);
+		cardDescrIcon.animation.add("DesignManual", [1]);
+		cardDescrIcon.animation.add("Calculator", [2]);
+		cardDescrIcon.animation.add("Marker", [3]);
+		cardDescrIcon.animation.add("GoldenBullet", [4]);
+		cardDescrIcon.animation.add("Intimidation", [5]);
+		cardDescrIcon.x = cardDescrBackground.x + 20;
+		cardDescrIcon.y = cardDescrBackground.y + 20;
+		cardDescrIcon.alpha = 0;
+		add(cardDescrIcon);
+
+		cardDescrText = new FlxText(cardDescrIcon.x + cardDescrIcon.width + 10, cardDescrIcon.y, 300, "", 16);
+		cardDescrText.alpha = 0;
+		add(cardDescrText);
+
 		table.onDeal = onDeal;
 		table.onCommunityCard = onCommunityCard;
 		table.onPotChanged = onPotChanged;
@@ -217,8 +265,103 @@ class PlayState extends BackgrndState
 	{
 		super.update(elapsed);
 
+		if (FlxG.keys.justPressed.NINE)
+			grantRandomItem();
+
 		MouseUtil.mouseCamera(36, 1.025);
 		doBreifcase();
+		doItemCards();
+
+		cardDescrIcon.alpha = cardDescrBackground.alpha;
+		cardDescrText.alpha = cardDescrBackground.alpha;
+	}
+
+	function doItemCards()
+	{
+		for (i in 0...playerItems.length)
+		{
+			var card = playerItems[i];
+			var hovering = FlxG.mouse.overlaps(card);
+
+			if (hovering != itemHovered[i])
+			{
+				itemHovered[i] = hovering;
+
+				if (hovering && card.value != null)
+					showCardDescription(card.value);
+				else
+					hideCardDescription();
+			}
+
+			if (MouseUtil.justClicked(card))
+			{
+				if (card.value != null)
+				{
+					hideCardDescription();
+					useItem(card.value);
+					card.use();
+				}
+			}
+		}
+	}
+
+	function showCardDescription(item:PlayerItem)
+	{
+		var descr = itemDescription(item);
+		cardDescrIcon.animation.play(descr.name);
+		cardDescrText.text = descr.text;
+
+		FlxTween.cancelTweensOf(cardDescrBackground);
+		FlxTween.tween(cardDescrBackground, {alpha: 1}, 0.25, {ease: FlxEase.quadOut});
+	}
+
+	function hideCardDescription()
+	{
+		FlxTween.cancelTweensOf(cardDescrBackground);
+		FlxTween.tween(cardDescrBackground, {alpha: 0}, 0.25, {ease: FlxEase.quadIn});
+	}
+
+	function itemDescription(item:PlayerItem):{name:String, text:String}
+	{
+		return switch (item)
+		{
+			case DesignManual: {name: "DesignManual", text: "You inspect the design manual for this game. It reveals the next 3 community cards."};
+			case Calculator: {name: "Calculator", text: "Increases your opponent's dept, focing them to bet double. High risk, high reward."};
+			case Marker: {name: "Marker", text: "You use a magic marker to change the type of your weakest hole card with the strongest card from your opponent's hand."};
+			case GoldenBullet: {name: "GoldenBullet", text: "Your life flash before your eyes, as you get saved from elimination with 100 extra chips. Wasted if unused, plan carefully."};
+			case Intimidation: {name: "Intimidation", text: "You cock your pistol from your back pouch, your opponent backs off for a while."};
+		}
+	}
+
+	function useItem(item:PlayerItem)
+	{
+		switch (item)
+		{
+			case DesignManual:
+				var nextCards = table.peekNextCards(3);
+				openSubState(new CardsRevealScreen(nextCards));
+
+			case Calculator:
+				table.armDoubleMinRaise();
+				addHistoryText("Calculator readied: next raise must be doubled!");
+
+			case Marker:
+				var swap = table.replaceWeakestHoleCard(table.localSeat);
+				if (swap != null)
+				{
+					if (holeCardSprites[swap.index] != null)
+						holeCardSprites[swap.index].reveal(swap.card, true);
+					addHistoryText('You upgrade your weakest card to ${CardUtil.formatCard(swap.card)}!');
+				}
+
+			case GoldenBullet:
+				goldenBulletArmed = true;
+				addHistoryText("Golden Bullet armed for this hand!");
+
+			case Intimidation:
+				table.armForcedFold(1 - table.localSeat);
+				addHistoryText("Intimidation readied: opponent folds next turn!");
+		}
 	}
 
 	function doBreifcase() // brought back breifcase + code looked like ahh so i cleaned it up -MT
@@ -235,7 +378,7 @@ class PlayState extends BackgrndState
 				onComplete: function(tween:FlxTween) breifcaseUpdatable = true
 			});
 		} else {
-			FlxTween.tween(briefcase, {y: FlxG.height-120}, 0.5, {
+			FlxTween.tween(briefcase, {y: FlxG.height-50}, 0.5, {
 				ease: FlxEase.quadIn,
 				onComplete: function(tween:FlxTween) breifcaseUpdatable = true
 			});
@@ -245,6 +388,9 @@ class PlayState extends BackgrndState
 	function onDeal()
 	{
 		addHistoryText("New hand dealt.");
+
+		handStartChips = localPlayer.chips;
+		localFolded = false;
 
 		killHoleCards();
 		killCommunityCards();
@@ -372,7 +518,9 @@ class PlayState extends BackgrndState
 		if (seat == table.localSeat)
 			switch (action)
 			{
-				case Fold: killHoleCards();
+				case Fold:
+					killHoleCards();
+					localFolded = true;
 				default:
 			}
 
@@ -399,6 +547,22 @@ class PlayState extends BackgrndState
 		else
 			for (r in results)
 				addHistoryText('${r.name} wins $$${r.winnings} (${r.handText})');
+
+		var localWon = results.filter(r -> r.seat == table.localSeat).length > 0;
+		var amountLost = handStartChips - localPlayer.chips;
+
+		if (!localWon && !localFolded && amountLost > 100)
+			grantRandomItem();
+	}
+
+	function grantRandomItem()
+	{
+		var emptySlots = playerItems.filter(c -> c.value == null);
+		if (emptySlots.length == 0)
+			return;
+
+		var items = [DesignManual, Calculator, Marker, GoldenBullet, Intimidation];
+		emptySlots[0].setItem(FlxG.random.getObject(items));
 	}
 
 	function onHandOver()
@@ -407,9 +571,19 @@ class PlayState extends BackgrndState
 
 		new FlxTimer(timers).start(2.5, (_) ->
 		{
+			if (goldenBulletArmed)
+			{
+				goldenBulletArmed = false; // one hand only, win or lose - "next round will be useless"
+				if (localPlayer.chips <= 0)
+				{
+					table.addChips(table.localSeat, 100);
+					addHistoryText("Golden Bullet saves you with 100 chips!");
+				}
+			}
+
 			var opponent = table.players[1 - table.localSeat];
-			var playerWon = opponent.chips <= 0 || localPlayer.chips >= 1800;
-			var playerLost = localPlayer.chips <= 0 || opponent.chips >= 1800;
+			var playerWon = opponent.chips <= 0 || localPlayer.chips >= 2400;
+			var playerLost = localPlayer.chips <= 0 || opponent.chips >= 2400;
 
 			if (playerWon || playerLost)
 				openSubState(new GameOverSubState(playerWon));
@@ -511,4 +685,32 @@ class PlayState extends BackgrndState
 		var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
 		raiseAmountText.text = '$$$target';
 	}
+}
+
+enum PlayerItem
+{
+	/**
+		Reveals the next 3 community cards
+	**/
+	DesignManual;
+
+	/**
+		The next player must raise the bet to at least double the previous raise (or 20)
+	**/
+	Calculator;
+
+	/**
+		Replaces your weakest card with the strongest card present in the current hand
+	**/
+	Marker;
+
+	/**
+		saves you from elimination by giving you 100 extra chips upon losing all credits, but only works if you lose to the current round, next round will be useless
+	**/
+	GoldenBullet;
+
+	/**
+		Makes the next player automatically fold their hand
+	**/
+	Intimidation;
 }

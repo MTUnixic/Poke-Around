@@ -56,6 +56,9 @@ class FlxThreeSprite extends FlxStrip
 
 	static inline var MIN_DEPTH:Float = 1;
 
+	var _offsetBaselineX:Float = 0;
+	var _offsetBaselineY:Float = 0;
+
 	var _cosx:Float = Math.cos(0);
 	var _cosy:Float = Math.cos(0);
 	var _cosz:Float = Math.cos(0);
@@ -161,6 +164,24 @@ class FlxThreeSprite extends FlxStrip
 		updateMesh();
 	}
 
+	@:noCompletion
+	override public function centerOffsets(AdjustPosition:Bool = false):Void
+	{
+		super.centerOffsets(AdjustPosition);
+		_offsetBaselineX = offset.x;
+		_offsetBaselineY = offset.y;
+		updateMesh();
+	}
+
+	@:noCompletion
+	override public function updateHitbox():Void
+	{
+		super.updateHitbox();
+		_offsetBaselineX = offset.x;
+		_offsetBaselineY = offset.y;
+		updateMesh();
+	}
+
 	/** Rotates a point (relative to the origin) in 3D and perspective-projects it back to 2D screen space. **/
 	private function rotateAndProject(px:Float, py:Float):FlxPoint
 	{
@@ -203,18 +224,19 @@ class FlxThreeSprite extends FlxStrip
 			width, height
 		];
 
-		// the camera offset point drifts under rotation same as any other vertex would; correcting
-		// by that drift is what keeps it pinned to a fixed screen position as the sprite rotates
+		var originX = origin.x * scale.x;
+		var originY = origin.y * scale.y;
+
 		var anchor = rotateAndProject(cameraOffsetX, cameraOffsetY);
-		var correctionX = cameraOffsetX - anchor.x;
-		var correctionY = cameraOffsetY - anchor.y;
+		var correctionX = cameraOffsetX - anchor.x + (originX - origin.x) + _offsetBaselineX;
+		var correctionY = cameraOffsetY - anchor.y + (originY - origin.y) + _offsetBaselineY;
 		anchor.put();
 
 		var updatedVertices:Array<Float> = [];
 
 		for (i in 0...Math.floor(verts.length / 2))
 		{
-			var projected = rotateAndProject(verts[i * 2] - origin.x, verts[i * 2 + 1] - origin.y);
+			var projected = rotateAndProject(verts[i * 2] - originX, verts[i * 2 + 1] - originY);
 			updatedVertices.push(projected.x + correctionX);
 			updatedVertices.push(projected.y + correctionY);
 			projected.put();
