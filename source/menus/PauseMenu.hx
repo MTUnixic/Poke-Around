@@ -20,7 +20,7 @@ class PauseMenu extends FlxSubState
 
 	override function create()
 	{
-		menu = new MenuUtil(['Resume', 'Restart', 'Exit To Menu', 'Close Game'], 0xEEFF00);
+		menu = new MenuUtil(['Resume', 'Restart', 'Exit To Menu', #if !web'Close Game'#end], 0xEEFF00);
 		
 		bg = new FlxSprite(0, 0);
 		bg.makeGraphic(1, 1, 0x94000000);
@@ -35,8 +35,10 @@ class PauseMenu extends FlxSubState
 
 		menu.addConfirmOption('Resume', () -> close());
 		menu.addConfirmOption('Restart', () -> FlxG.resetState());
-		menu.addConfirmOption('Close Game', () -> System.exit(0));
 		menu.addConfirmOption('Exit To Menu', () -> FlxG.switchState(() -> new MainMenu()));
+		#if !web
+		menu.addConfirmOption('Close Game', () -> System.exit(0));
+		#end
 
 		FlxTween.tween(FlxG.camera, { zoom: 1.0 }, 0.5, {
 			ease: FlxEase.quadOut,
