@@ -7,6 +7,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
+import menus.GameOverSubState;
 import menus.PauseMenu;
 import objects.Briefcase;
 import objects.Card;
@@ -406,8 +407,12 @@ class PlayState extends BackgrndState
 
 		new FlxTimer(timers).start(2.5, (_) ->
 		{
-			if (table.playersWithChips() < 2)
-				FlxG.resetState();
+			var opponent = table.players[1 - table.localSeat];
+			var playerWon = opponent.chips <= 0 || localPlayer.chips >= 1800;
+			var playerLost = localPlayer.chips <= 0 || opponent.chips >= 1800;
+
+			if (playerWon || playerLost)
+				openSubState(new GameOverSubState(playerWon));
 			else
 				table.startHand();
 		});
@@ -441,7 +446,10 @@ class PlayState extends BackgrndState
 	function addHistoryText(msg:String)
 	{
 		for (t in historyTexts)
+		{
+			FlxTween.completeTweensOf(t);
 			FlxTween.tween(t, {y: t.y - 22}, 0.3, {ease: FlxEase.quadOut});
+		}
 
 		var text = new FlxText(40, FlxG.height - 170, /*260*/400, msg, 16);
 		text.color = 0xffcdf7e2;
