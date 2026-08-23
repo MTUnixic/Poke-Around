@@ -218,7 +218,7 @@ class PlayState extends BackgrndState
 		doBreifcase();
 	}
 
-	function doBreifcase():Void // brought back breifcase + code looked like ahh so i cleaned it up -MT
+	function doBreifcase() // brought back breifcase + code looked like ahh so i cleaned it up -MT
 	{
 		if (!breifcaseUpdatable) return;
 		if (FlxG.mouse.overlaps(briefcase) == lastBriefcaseHover) return;
@@ -314,10 +314,10 @@ class PlayState extends BackgrndState
 		FlxTween.cancelTweensOf(squa);
 		FlxTween.cancelTweensOf(glow);
 
-		var targetColor:FlxColor = table.players[seat].isBot ? 0xfffa6a0a : 0xff6d758d;
+		var targetColor:FlxColor = table.players[seat].isBot ? 0xff6d758d : 0xff1a7a3e;
 
-		FlxTween.color(squa, 1.0, squa.color, targetColor, {ease: FlxEase.circOut, type: PERSIST});
-		FlxTween.color(glow, 1.0, glow.color, targetColor, {ease: FlxEase.circOut, type: PERSIST});
+		alphalessColorTween(squa, targetColor);
+		alphalessColorTween(glow, targetColor);
 
 		if (table.players[seat].isBot)
 			dealerSprites[seat]?.think();
@@ -326,6 +326,28 @@ class PlayState extends BackgrndState
 			disableActionButtons();
 		else
 			enableHumanActionButtons();
+	}
+
+	inline function alphalessColorTween(sprite:FlxSprite, targetColor:FlxColor, ?time:Float = 0.75, ?options:TweenOptions) // colors tweens are 0xAArrggbb so if alpha is FF alpha will be forcefully tweened to 1 -MT
+	{
+		var oldRed = sprite.color.red;
+		var oldGreen = sprite.color.green;
+		var oldBlue = sprite.color.blue;
+
+		options ??= {ease: FlxEase.quadOut}; // if (options == null) options = {ease: FlxEase.quadOut};
+
+		FlxTween.num(oldRed, targetColor.red, time, options, value -> {
+			oldRed = Std.int(value);
+			sprite.color = FlxColor.fromRGB(oldRed, oldGreen, oldBlue);
+		});
+		FlxTween.num(oldGreen, targetColor.green, time, options, value -> {
+			oldGreen = Std.int(value);
+			sprite.color = FlxColor.fromRGB(oldRed, oldGreen, oldBlue);
+		});
+		FlxTween.num(oldBlue, targetColor.blue, time, options, value -> {
+			oldBlue = Std.int(value);
+			sprite.color = FlxColor.fromRGB(oldRed, oldGreen, oldBlue);
+		});
 	}
 
 	function onPlayerActed(seat:Int, action:PlayerAction)
