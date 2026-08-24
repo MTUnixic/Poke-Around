@@ -82,6 +82,8 @@ class Table
 	var doubleMinRaiseArmed:Bool = false;
 	var forcedFoldSeat:Int = -1;
 
+	public var isRaiseBttnCapped = true;
+
 	public dynamic function onDeal():Void {}
 	public dynamic function onCommunityCard(data:CardData, index:Int):Void {}
 	public dynamic function onPotChanged():Void {}

@@ -7,7 +7,7 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import lime.system.System;
+import util.AudioUtil;
 import util.MenuUtil;
 import util.MouseUtil;
 
@@ -44,6 +44,8 @@ class PauseMenu extends FlxSubState
 			ease: FlxEase.quadOut,
 			type: PERSIST
 		});
+		
+		FlxTween.tween(AudioUtil.gameMusic, {volume: 0.2}, 1.5);
 
 		add(bg);
 		add(buttonGroup);
@@ -55,5 +57,10 @@ class PauseMenu extends FlxSubState
 
 		menu.updateLoop();
 		MouseUtil.mouseCamera(48);
+	}
+
+	override function close() {
+		FlxTween.tween(AudioUtil.gameMusic, {volume: 1}, 1.5);
+		super.close();
 	}
 }

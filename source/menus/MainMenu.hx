@@ -1,6 +1,5 @@
 package menus;
 
-import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.transition.FlxTransitionSprite.GraphicTransTileDiamond;
@@ -12,6 +11,7 @@ import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import util.AudioUtil;
 import util.MenuUtil;
 import util.MouseUtil;
 
@@ -37,16 +37,17 @@ class MainMenu extends BackgrndState
 		remove(frame, true);
 		remove(pokerTable, true);
 
-		menu = new MenuUtil(['Play', 'Credits', #if !web'Quit Game'#end]);
+		menu = new MenuUtil(['Play', 'Credits', 'Guide (WIP)', #if !web'Quit Game'#end]);
 	
 		buttonGroup = new FlxTypedGroup<FlxText>();
 
 		menu.makeButtonGroup(buttonGroup);
 		menu.addConfirmOption('Play', () -> {
-			MusicManager.switchToGameMusic();
+			AudioUtil.switchToGameMusic();
 			FlxG.switchState(() -> new PlayState());
 		});
 		menu.addConfirmOption('Credits', () -> FlxG.switchState(() -> new CreditsMenu()));
+		//menu.addConfirmOption('Guide', () -> FlxG.switchState(() -> new GuideMenu()));
 		#if !web menu.addConfirmOption('Quit Game', () -> Sys.exit(0)); #end
 		add(buttonGroup);
 
@@ -61,7 +62,7 @@ class MainMenu extends BackgrndState
 		titleSprite.scrollFactor.setXY(1.4);
 		add(titleSprite);
 
-		MusicManager.ensureMenuMusic();
+		AudioUtil.initMenuMusic();
 	}
 
 	override function update(elapsed:Float)

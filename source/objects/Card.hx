@@ -4,6 +4,7 @@ import backend.flixel.FlxThreeSprite;
 import flixel.FlxG;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import util.AudioUtil;
 import util.CardUtil.CardData;
 
 class Card extends FlxThreeSprite
@@ -35,7 +36,7 @@ class Card extends FlxThreeSprite
 			return;
 		}
 
-		FlxG.sound.play('assets/sounds/open${FlxG.random.int(1,3)}.wav').play();
+		AudioUtil.playSound('assets/sounds/open${FlxG.random.int(1,3)}.wav');
 
 		var pW = width, pH = height;
 

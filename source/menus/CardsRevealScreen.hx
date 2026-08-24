@@ -6,6 +6,7 @@ import flixel.FlxSubState;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import objects.Card;
+import util.AudioUtil;
 import util.CardUtil.CardData;
 
 class CardsRevealScreen extends FlxSubState
@@ -65,7 +66,7 @@ class CardsRevealScreen extends FlxSubState
 			});
 		}
 
-		FlxG.sound.play("assets/sounds/Sonic.exe Ding SFX2.wav").play();
+		AudioUtil.playSound("assets/sounds/Sonic.exe Ding SFX2.wav");
 
 		FlxTimer.wait(4.1, () -> {
 			FlxTween.tween(bg, {alpha: 0}, 0.5, { onComplete: (_) -> {
