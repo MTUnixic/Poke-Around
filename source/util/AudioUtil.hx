@@ -4,6 +4,9 @@ import flixel.FlxG;
 import flixel.sound.FlxSound;
 import flixel.system.FlxAssets.FlxSoundAsset;
 import flixel.tweens.FlxTween;
+import openfl.utils.Assets;
+
+using StringTools;
 
 class AudioUtil
 {
@@ -76,5 +79,15 @@ class AudioUtil
 		tweenManager.tween(gameMusic, {volume: 0}, 1, {onComplete: (_) -> {
 			tweenManager.tween(menuMusic, {volume: MENU_MUSIC_VOLUME}, 1);
 		}});
+	}
+
+	/**
+	 * Returns an array of song names to use for music list
+	 * @param listPath file path to the txt file
+	 * @return An array of song names from the txt file
+	 */
+	public inline static function fillMusicList(listPath:String):Array<String>
+	{
+		return Assets.getText(listPath).split("\n").map(str -> str.trim());
 	}
 }

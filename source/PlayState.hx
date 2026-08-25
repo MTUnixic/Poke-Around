@@ -87,6 +87,9 @@ class PlayState extends BackgrndState
 	{
 		super.create();
 
+		addVisualizer(AudioUtil.gameMusic);
+		visualizer.alphaMax = 0.2;
+
 		timers = new FlxTimerManager();
 		add(timers);
 
@@ -500,6 +503,8 @@ class PlayState extends BackgrndState
 
 		alphalessColorTween(squa, targetColor);
 		alphalessColorTween(glow, targetColor);
+
+		tweenBarColorsTo(targetColor);
 
 		// only lets u uncap 1 turn at a time
 		if (!table.isRaiseBttnCapped)

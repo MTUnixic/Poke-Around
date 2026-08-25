@@ -1,8 +1,15 @@
 package;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxBackdrop;
 import flixel.addons.transition.FlxTransitionableState;
+import flixel.sound.FlxSound;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween.FlxTweenType;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+import objects.AudioVisualizer;
 
 class BackgrndState extends FlxTransitionableState
 {
@@ -14,6 +21,8 @@ class BackgrndState extends FlxTransitionableState
     var diam:FlxBackdrop;
     
     public var squa:FlxBackdrop;
+
+    public var visualizer:AudioVisualizer;
     
     override function create()
     {
@@ -55,6 +64,31 @@ class BackgrndState extends FlxTransitionableState
         
         super.create();
     }
+
+    public function addVisualizer(music:FlxSound) {
+        @:privateAccess
+		final musicSrc = cast #if (openfl < "9.3.2") music._channel.__source #else music._channel.__audioSource #end;
+
+        visualizer = new AudioVisualizer(musicSrc, 32);
+
+        for (bar in visualizer.barGroup.members)
+            bar.scrollFactor.setXY(0.5);
+        for (peak in visualizer.peakLines.members)
+            peak.scrollFactor.setXY(0.5);
+
+		insert(1, visualizer);
+    }
+
+    public function tweenBarColorsTo(targetColor:FlxColor, duration = 0.75, ?ease:EaseFunction, ?type:FlxTweenType)
+	{
+		ease ??= FlxEase.quadOut;
+		type ??= FlxTweenType.PERSIST;
+
+		for (bar in visualizer.barGroup.members)
+			FlxTween.color(bar, duration, bar.color, targetColor, {ease: ease, type: type});
+        for (peak in visualizer.peakLines.members)
+			FlxTween.color(peak, duration, peak.color, targetColor, {ease: ease, type: type});
+	}
 
     /** too lazy to do the math **/
     inline function scratchGhost2Flixel(ghost:Int):Float

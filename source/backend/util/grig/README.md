@@ -1,0 +1,1 @@
+This util has been yoinked from FunkinCrew's [grig.audio](https://github.com/FunkinCrew/grig.audio), an Aaudio I/O and audio primitives utility for haxe.

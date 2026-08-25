@@ -39,6 +39,9 @@
 
 	<haxelib name="flixel" />
 
+	<!-- needed for the visualiser's libs -->
+	<haxelib name="tink_core" />
+
 	<!--In case you want to use the addons package-->
 	<haxelib name="flixel-addons" />
 

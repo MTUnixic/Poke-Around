@@ -14,6 +14,7 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import lime.app.Application;
+import openfl.display.BlendMode;
 import util.AudioUtil;
 import util.MenuUtil;
 import util.MouseUtil;
@@ -37,6 +38,13 @@ class MainMenu extends BackgrndState
 		persistentUpdate = true;
 
 		super.create();
+
+		AudioUtil.initMenuMusic();
+
+		addVisualizer(AudioUtil.menuMusic);
+		tweenBarColorsTo(0xFF242234, 0.1);
+
+		visualizer.alphaMax = visualizer.alphaMin = 1.0;
 
 		remove(glow, true);
 		remove(frame, true);
@@ -72,7 +80,7 @@ class MainMenu extends BackgrndState
 
 		var versionText = new FlxText(0, 0, 86, 'v$version$versionSuffix', 12);
 		versionText.alignment = CENTER;
-		versionText.color = 0x809C7070;
+		versionText.color = 0xFF242234; // fits the bg color -MT
 		versionText.y = 64;
 		versionText.x = FlxG.width - versionText.width - 64;
 		versionText.scrollFactor.setXY(0.2);
@@ -91,8 +99,6 @@ class MainMenu extends BackgrndState
 			FlxTween.tween(versionText.scale, {x:1, y:1}, 60/BPM, {ease: FlxEase.linear});
 		}
 		bumpTextVersion(false);
-
-		AudioUtil.initMenuMusic();
 	}
 
 	override function update(elapsed:Float)

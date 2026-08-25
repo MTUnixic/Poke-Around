@@ -1,0 +1,1 @@
+This util has been yoinked from [funkin.vis](https://github.com/FunkinCrew/funkVis), a spectrum visualizer utility.

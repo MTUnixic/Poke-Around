@@ -26,6 +26,8 @@ class CreditsMenu extends BackgrndState
     var chungus = new Credited(2);
     var codeanomaly08 = new Credited(3);
 
+    var globalX = 80;
+
     override function create()
     {
 		persistentUpdate = true;
@@ -36,22 +38,22 @@ class CreditsMenu extends BackgrndState
 		remove(frame, true);
 		remove(pokerTable, true);
 
-        mtunixic.posIcon(180, 120);
+        mtunixic.posIcon(globalX, 120);
         mtunixic.makeHeaderName('MT Unixic', 0xFFFFFC40, 0xFFDF3E23);
         mtunixic.makeDescription('Though it was tiring, I loved working on this,\nand I am glad to be a part of my first ever team!\nIt would not have been possible at all without them,\nand I thank everyone so much for that :]');
         mtunixic.addHeaderQualities(['Director', 'Coder', 'Artist', 'Animator', "Composer"]);
 
-        davvex87.posIcon(180, 320);
+        davvex87.posIcon(globalX, 320);
         davvex87.makeHeaderName('Davvex87', 0xFF20D6C7, 0xFF143464);
         davvex87.makeDescription('HAXE! HAXE! HAXE! HAXE! HAXE! HAXE! HAXE!!');
         davvex87.addHeaderQualities(['Co-Director', 'Coder']);
 
-        chungus.posIcon(180, 440);
+        chungus.posIcon(globalX, 440);
         chungus.makeHeaderName('Besomething (be n)', 0xFFDF3E23, 0xFF422433);
         chungus.makeDescription('[TEMPLATE](helped with menus and background)');
         chungus.addHeaderQualities(['Coder']);
 
-        codeanomaly08.posIcon(180, 560);
+        codeanomaly08.posIcon(globalX, 560);
         codeanomaly08.makeHeaderName('Mike', 0xFF9CCB43, 0xFF24523B);
         codeanomaly08.makeDescription('[TEMPLATE](helped with the core poker system and initial game loop)');
         codeanomaly08.addHeaderQualities(['Coder']);
