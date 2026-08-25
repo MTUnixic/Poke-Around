@@ -66,10 +66,8 @@ class BackgrndState extends FlxTransitionableState
     }
 
     public function addVisualizer(music:FlxSound) {
-        @:privateAccess
-		final musicSrc = cast #if (openfl < "9.3.2") music._channel.__source #else music._channel.__audioSource #end;
 
-        visualizer = new AudioVisualizer(musicSrc, 32);
+        visualizer = new AudioVisualizer(music, 32);
 
         for (bar in visualizer.barGroup.members)
             bar.scrollFactor.setXY(0.5);

@@ -4,6 +4,7 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
 import flixel.math.FlxMath;
+import flixel.sound.FlxSound;
 import flixel.util.FlxColor;
 import funkin.vis.dsp.SpectralAnalyzer;
 import lime.media.AudioSource;
@@ -30,14 +31,14 @@ class AudioVisualizer extends FlxGroup
 
 	/**
 		creates a group that renders a real-time audio spectrum visualiser using vertical bars
-		@param audioSource audio source to visualise (from `FlxG.sound.music` or `FlxSound`)
+		@param sound FlxSound instance to visualise (from `FlxG.sound.music` or a basic `FlxSound`)
 		@param barCount how many frequency bands are made and shown (default 48)
 		@param showPeak toggles visibily of bars' peak (default false)
 		@param barColor color of the bars (default FlxColor.WHITE)
 		@param peakColor color of the bars' peak (default FlxColor.CYAN)
 		@param barScaleYOrigin (optional) the y origin the bar scales at (FlxG.height for bottom-to-top, and 0 for top-to-bottom)
 	**/
-	public function new(audioSource:AudioSource, barCount = 48, showPeak = false, barColor = FlxColor.WHITE, peakColor = FlxColor.CYAN, ?barScaleYOrigin:Int)
+	public function new(sound:FlxSound, barCount = 48, showPeak = false, barColor = FlxColor.WHITE, peakColor = FlxColor.CYAN, ?barScaleYOrigin:Int)
 	{
 		super();
 
@@ -49,7 +50,7 @@ class AudioVisualizer extends FlxGroup
 		this.showPeak = showPeak;
 		this.barCount = barCount;
 
-		analyzer = new SpectralAnalyzer(audioSource, barCount, 0.5, 10);
+		analyzer = SpectralAnalyzer.fromFlxSound(sound, barCount, 0.5, 10);
 
 		initBars(barCount);
 
