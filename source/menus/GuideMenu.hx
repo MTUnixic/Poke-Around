@@ -7,6 +7,8 @@ class GuideMenu extends BackgrndState
 {
     override function create()
     {
+		persistentUpdate = true;
+        
         super.create();
 
         remove(glow, true);

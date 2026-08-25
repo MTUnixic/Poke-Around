@@ -28,6 +28,8 @@ class CreditsMenu extends BackgrndState
 
     override function create()
     {
+		persistentUpdate = true;
+        
         super.create();
 
         remove(glow, true);

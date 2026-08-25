@@ -10,7 +10,10 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import lime.app.Application;
 import util.AudioUtil;
 import util.MenuUtil;
 import util.MouseUtil;
@@ -30,6 +33,8 @@ class MainMenu extends BackgrndState
 
 		FlxTransitionableState.defaultTransIn = new TransitionData(TILES, FlxColor.BLACK, 0.5, FlxPoint.get(1,0), {asset: diamond, width: 32, height: 32}, screenRegion);
 		FlxTransitionableState.defaultTransOut = new TransitionData(TILES, FlxColor.BLACK, 0.5, FlxPoint.get(1,0), {asset: diamond, width: 32, height: 32}, screenRegion);
+
+		persistentUpdate = true;
 
 		super.create();
 
@@ -61,6 +66,31 @@ class MainMenu extends BackgrndState
 		titleSprite.y -= 110;
 		titleSprite.scrollFactor.setXY(1.4);
 		add(titleSprite);
+
+		final version = Application.current.meta.get("version");
+		final versionSuffix = #if debug '\nDEBUG' #else '' #end;
+
+		var versionText = new FlxText(0, 0, 86, 'v$version$versionSuffix', 12);
+		versionText.alignment = CENTER;
+		versionText.color = 0x809C7070;
+		versionText.y = 64;
+		versionText.x = FlxG.width - versionText.width - 64;
+		versionText.scrollFactor.setXY(0.2);
+		add(versionText);
+
+		final BPM = 140;
+
+		function bumpTextVersion(right:Bool)
+		{
+			FlxTween.completeTweensOf(versionText);
+
+			versionText.angle = right ? -5 : 5;
+			FlxTween.tween(versionText, {angle:0}, 60/BPM, {ease: FlxEase.linear, onComplete: (_) -> bumpTextVersion(!right)});
+
+			versionText.scale.setXY(1.1);
+			FlxTween.tween(versionText.scale, {x:1, y:1}, 60/BPM, {ease: FlxEase.linear});
+		}
+		bumpTextVersion(false);
 
 		AudioUtil.initMenuMusic();
 	}
