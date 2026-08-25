@@ -13,8 +13,10 @@ class Main extends Sprite
 	{
 		super();
 
-		addChild(new FlxGame(0, 0, MainMenu));
+		addChild(new FlxGame(1280, 720, MainMenu));
 
+		#if FLX_MOUSE
 		FlxG.mouse.load(FlxGraphic.fromAssetKey("assets/images/game/pokeryouhorse.png", true, null, false).bitmap, 1, -11, -3);
+		#end
 	}
 }

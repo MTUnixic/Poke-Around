@@ -5,6 +5,7 @@ import flixel.FlxG;
 
 class MouseUtil
 {
+	#if FLX_MOUSE
     public static inline function mouseCamera(power:Int = 24, ?zoom:Float)
 	{
 		FlxG.camera.scroll.x = (FlxG.mouse.x - FlxG.width / 2) / power;
@@ -18,4 +19,26 @@ class MouseUtil
 
     public static inline function justClicked(object:FlxBasic):Bool
 		return FlxG.mouse.overlaps(object) && FlxG.mouse.justPressed;
+	#else
+    public static inline function mouseCamera(power:Int = 24, ?zoom:Float)
+	{
+        if (zoom != null) FlxG.camera.zoom = zoom;
+	}
+
+    public static inline function isClicked(object:FlxBasic):Bool
+	{
+		var touches = FlxG.touches.list;
+		if (touches.length != 1)
+			return false;
+		return touches[0].overlaps(object);
+	}
+
+    public static inline function justClicked(object:FlxBasic):Bool
+	{
+		var touches = FlxG.touches.justStarted();
+		if (touches.length != 1)
+			return false;
+		return touches[0].overlaps(object);
+	}
+	#end
 }

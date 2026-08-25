@@ -60,6 +60,7 @@ import util.MouseUtil;
     {
         super.update(elapsed);
 
+        #if FLX_MOUSE
         if (FlxG.mouse.overlaps(iSprite)) {
             iSprite.scale.set(iSprite.scale.x+0.1, iSprite.scale.y+0.1);
             if (iSprite.scale.x >= 2.25) iSprite.scale.setXY(2.25);
@@ -67,6 +68,7 @@ import util.MouseUtil;
             iSprite.scale.set(iSprite.scale.x-0.1, iSprite.scale.y-0.1);
             if (iSprite.scale.x <= 2) iSprite.scale.setXY(2);
         }
+        #end
 
         if (MouseUtil.justClicked(iSprite) && !isDescOpened) {
             isDescOpened = true;

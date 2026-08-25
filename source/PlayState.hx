@@ -269,8 +269,10 @@ class PlayState extends BackgrndState
 	{
 		super.update(elapsed);
 
+		#if (debug && FLX_KEYBOARD)
 		if (FlxG.keys.justPressed.NINE)
 			grantRandomItem();
+		#end
 
 		MouseUtil.mouseCamera(36, 1.025);
 		doBreifcase();
@@ -285,6 +287,8 @@ class PlayState extends BackgrndState
 		for (i in 0...playerItems.length)
 		{
 			var card = playerItems[i];
+
+			#if FLX_MOUSE
 			var hovering = FlxG.mouse.overlaps(card);
 
 			if (hovering != itemHovered[i])
@@ -296,6 +300,7 @@ class PlayState extends BackgrndState
 				else
 					hideCardDescription();
 			}
+			#end
 
 			if (MouseUtil.justClicked(card))
 			{
@@ -309,6 +314,9 @@ class PlayState extends BackgrndState
 		}
 	}
 
+	#if FLX_NO_MOUSE
+	var cardDescrHideTimer:Null<FlxTimer>;
+	#end
 	function showCardDescription(item:PlayerItem)
 	{
 		var descr = itemDescription(item);
@@ -317,6 +325,15 @@ class PlayState extends BackgrndState
 
 		FlxTween.cancelTweensOf(cardDescrBackground);
 		FlxTween.tween(cardDescrBackground, {alpha: 1}, 0.25, {ease: FlxEase.quadOut});
+
+		#if FLX_NO_MOUSE
+		if (cardDescrHideTimer != null && cardDescrHideTimer.active)
+			cardDescrHideTimer.cancel();
+		cardDescrHideTimer = new FlxTimer();
+		cardDescrHideTimer.start(10, function(t:FlxTimer) {
+			hideCardDescription();
+		});
+		#end
 	}
 
 	function hideCardDescription()
@@ -371,12 +388,14 @@ class PlayState extends BackgrndState
 	function doBreifcase() // brought back breifcase + code looked like ahh so i cleaned it up -MT
 	{
 		if (!breifcaseUpdatable) return;
-		if (FlxG.mouse.overlaps(briefcase) == lastBriefcaseHover) return;
 
-		lastBriefcaseHover = FlxG.mouse.overlaps(briefcase);
+		var overlaps = #if FLX_NO_KEYBOARD true #else FlxG.mouse.overlaps(briefcase) #end;
+		if (overlaps == lastBriefcaseHover) return;
+
+		lastBriefcaseHover = overlaps;
 		breifcaseUpdatable = false;
 
-		if (FlxG.mouse.overlaps(briefcase)) {
+		if (overlaps) {
 			FlxTween.tween(briefcase, {y: FlxG.height-140}, 0.75, {
 				ease: FlxEase.quadOut,
 				onComplete: function(tween:FlxTween) breifcaseUpdatable = true
@@ -568,7 +587,15 @@ class PlayState extends BackgrndState
 			return;
 
 		var items = [DesignManual, Calculator, Marker, GoldenBullet, Intimidation];
-		emptySlots[0].setItem(FlxG.random.getObject(items));
+		var card = emptySlots[0];
+		card.setItem(FlxG.random.getObject(items));
+
+		#if FLX_NO_MOUSE
+		if (card.value != null)
+			showCardDescription(card.value);
+		else
+			hideCardDescription();
+		#end
 	}
 
 	function onHandOver()

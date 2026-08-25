@@ -68,8 +68,10 @@ class MainMenu extends BackgrndState
 	{
 		super.update(elapsed);
 		
+		#if (debug && FLX_KEYBOARD)
 		if (FlxG.keys.justPressed.NINE)
 			FlxG.switchState(() -> new CharacterTestState());
+		#end
 		
 		menu.updateLoop();
 		MouseUtil.mouseCamera(24, 1.1);
