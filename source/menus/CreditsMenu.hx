@@ -1,7 +1,6 @@
 package menus;
 
 import BackgrndState;
-import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxContainer;
@@ -11,10 +10,78 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import util.AudioUtil;
 import util.MenuUtil;
 import util.MouseUtil;
 
-@:structInit private class Credited extends FlxContainer
+using StringTools;
+
+class CreditsMenu extends BackgrndState
+{
+    var buttonGroup:FlxTypedGroup<FlxText>;
+	var menu:MenuUtil;
+
+    var mtunixic = new Credited(0);
+    var davvex87 = new Credited(1);
+    var chungus = new Credited(2);
+    var codeanomaly08 = new Credited(3);
+
+    override function create()
+    {
+        super.create();
+
+        remove(glow, true);
+		remove(frame, true);
+		remove(pokerTable, true);
+
+        mtunixic.posIcon(180, 120);
+        mtunixic.makeHeaderName('MT Unixic', 0xFFFFFC40, 0xFFDF3E23);
+        mtunixic.makeDescription('Though it was tiring, I loved working on this,\nand I am glad to be a part of my first ever team!\nIt would not have been possible at all without them,\nand I thank everyone so much for that :]');
+        mtunixic.addHeaderQualities(['Director', 'Coder', 'Artist', 'Animator', "Composer"]);
+
+        davvex87.posIcon(180, 320);
+        davvex87.makeHeaderName('Davvex87', 0xFF20D6C7, 0xFF143464);
+        davvex87.makeDescription('HAXE! HAXE! HAXE! HAXE! HAXE! HAXE! HAXE!!');
+        davvex87.addHeaderQualities(['Co-Director', 'Coder']);
+
+        chungus.posIcon(180, 440);
+        chungus.makeHeaderName('Besomething (be n)', 0xFFDF3E23, 0xFF422433);
+        chungus.makeDescription('[TEMPLATE](helped with menus and background)');
+        chungus.addHeaderQualities(['Coder']);
+
+        codeanomaly08.posIcon(180, 560);
+        codeanomaly08.makeHeaderName('Mike', 0xFF9CCB43, 0xFF24523B);
+        codeanomaly08.makeDescription('[TEMPLATE](helped with the core poker system and initial game loop)');
+        codeanomaly08.addHeaderQualities(['Coder']);
+
+        add(mtunixic);
+        add(davvex87);
+        add(chungus);
+        add(codeanomaly08);
+
+        menu = new MenuUtil(['Go Back']);
+	
+		buttonGroup = new FlxTypedGroup<FlxText>();
+		menu.makeButtonGroup(buttonGroup);
+
+        for (buttonText in buttonGroup) {
+            buttonText.y = FlxG.height - buttonText.height - 8;
+        }
+		menu.addConfirmOption('Go Back', () -> FlxG.switchState(() -> new MainMenu()));
+		add(buttonGroup);
+
+		AudioUtil.initMenuMusic();
+    }
+
+    override function update(elapsed:Float) {
+        super.update(elapsed);
+
+        menu.updateLoop();
+        MouseUtil.mouseCamera();
+    }
+}
+
+private class Credited extends FlxContainer
 {
     public var iSprite = new FlxSprite();
     public var description = new FlxText();
@@ -89,13 +156,21 @@ import util.MouseUtil;
         descX = iSprite.x + 125;
         description.y = iSprite.y + 52 - 8;
         description.size = 24;
+
         color ??= 0xFF6D758D;
         description.color = color;
-        if (desc == null) {
-            desc = 'Heh, what a predictable creature.. LAST, JARONA!';
-            description.alpha = 0.5;
-        }
-        description.text = '"' + desc + '"';
+
+        desc ??= 'Heh, what a predictable creature.. LAST, JARONA!';
+
+        final isTemplate = desc.startsWith('[TEMPLATE]');
+
+        description.alpha = isTemplate ? 0.5 : 1;
+
+        if (isTemplate)
+            desc = desc.substr('[TEMPLATE]'.length);
+
+        description.text = isTemplate ? desc : '"' + desc + '"';
+
         description.x = -description.width;
     }
 
@@ -135,70 +210,5 @@ import util.MouseUtil;
             header.add(h);
             lastText = h;
         }
-    }
-}
-
-class CreditsMenu extends BackgrndState
-{
-    var buttonGroup:FlxTypedGroup<FlxText>;
-	var menu:MenuUtil;
-
-    var mtunixic = new Credited(0);
-    var davvex87 = new Credited(1);
-    var chungus = new Credited(2);
-    var codeanomaly08 = new Credited(3);
-
-    override function create()
-    {
-        super.create();
-
-        remove(glow, true);
-		remove(frame, true);
-		remove(pokerTable, true);
-
-        mtunixic.posIcon(180, 120);
-        mtunixic.makeHeaderName('MT Unixic', 0xFFFFFC40, 0xFFDF3E23);
-        mtunixic.makeDescription('Though it was tiring, I loved working on this,\nand I am glad to be a part of my first ever team!\nIt would not have been possible at all without them,\nand I thank everyone so much for that :]');
-        mtunixic.addHeaderQualities(['Director', 'Coder', 'Artist', 'Animator']);
-
-        davvex87.posIcon(180, 320);
-        davvex87.makeHeaderName('Davvex87', 0xFF20D6C7, 0xFF143464);
-        davvex87.makeDescription();
-        davvex87.addHeaderQualities(['Co-Director', 'Coder']);
-
-        chungus.posIcon(180, 440);
-        chungus.makeHeaderName('Besomething (be n)', 0xFFDF3E23, 0xFF422433);
-        chungus.makeDescription();
-        chungus.addHeaderQualities(['Coder']);
-
-        codeanomaly08.posIcon(180, 560);
-        codeanomaly08.makeHeaderName('Mike', 0xFF9CCB43, 0xFF24523B);
-        codeanomaly08.makeDescription();
-        codeanomaly08.addHeaderQualities(['Coder']);
-
-        add(mtunixic);
-        add(davvex87);
-        add(chungus);
-        add(codeanomaly08);
-
-        menu = new MenuUtil(['Go Back']);
-	
-		buttonGroup = new FlxTypedGroup<FlxText>();
-		menu.makeButtonGroup(buttonGroup);
-
-        for (buttonText in buttonGroup) {
-            buttonText.y = FlxG.height - buttonText.height - 8;
-        }
-		menu.addConfirmOption('Go Back', () -> FlxG.switchState(() -> new MainMenu()));
-		add(buttonGroup);
-
-		MusicManager.ensureMenuMusic();
-    }
-
-    override function update(elapsed:Float) {
-        super.update(elapsed);
-
-        menu.updateLoop();
-        MouseUtil.mouseCamera();
     }
 }

@@ -1,9 +1,7 @@
 package;
 
-import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.effects.FlxFlicker;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -17,6 +15,7 @@ import objects.Card;
 import objects.DealerSprite;
 import objects.ItemCard;
 import objects.Table;
+import util.AudioUtil;
 import util.CardUtil;
 import util.MouseUtil;
 import util.SpriteButtonUtil;
@@ -36,7 +35,7 @@ class PlayState extends BackgrndState
 	static inline var SMALL_BTN_SCALE = 0.75;
 	static inline var SMALL_BTN_W = 37.5; // SMALL_BTN_FRAME_W * SMALL_BTN_SCALE
 	static inline var SMALL_BTN_H = 37.5; // SMALL_BTN_FRAME_H * SMALL_BTN_SCALE
-	static inline var AMOUNT_TEXT_W = 80;
+	static inline var AMOUNT_TEXT_W = 96;
 	static inline var AMOUNT_TEXT_GAP = 10;
 
 	var table:Table;
@@ -215,7 +214,7 @@ class PlayState extends BackgrndState
 		{
 			var itemCard = new ItemCard(50 + i * 50, 2);
 			itemCard.alpha = 0;
-			FlxTimer.wait(0.8 + i * 0.25, () -> FlxTween.tween(itemCard, {alpha: 1}, 0.5, {ease: FlxEase.quadOut}));
+			FlxTimer.wait(1.1 + i * 0.5, () -> FlxTween.tween(itemCard, {alpha: 1}, 0.5, {ease: FlxEase.quadOut}));
 			briefcase.addCard(itemCard);
 			playerItems.push(itemCard);
 		}
@@ -232,12 +231,14 @@ class PlayState extends BackgrndState
 		add(cardDescrBackground);
 
 		cardDescrIcon = new FlxSprite();
+
 		cardDescrIcon.loadGraphic("assets/images/pokuhcaards.png", true, 64, 80);
 		cardDescrIcon.animation.add("DesignManual", [1]);
 		cardDescrIcon.animation.add("Calculator", [2]);
 		cardDescrIcon.animation.add("Marker", [3]);
 		cardDescrIcon.animation.add("GoldenBullet", [4]);
 		cardDescrIcon.animation.add("Intimidation", [5]);
+		cardDescrIcon.animation.add("Profit", [6]);
 		cardDescrIcon.x = cardDescrBackground.x + 20;
 		cardDescrIcon.y = cardDescrBackground.y + 20;
 		cardDescrIcon.alpha = 0;
@@ -351,6 +352,7 @@ class PlayState extends BackgrndState
 			case Marker: {name: "Marker", text: "You use a magic marker to change the type of your weakest hole card with the strongest card from your opponent's hand."};
 			case GoldenBullet: {name: "GoldenBullet", text: "Your life flash before your eyes, as you get saved from elimination with 125 extra chips. Wasted if unused, plan carefully."};
 			case Intimidation: {name: "Intimidation", text: "You cock your pistol from your back pouch, your opponent backs off for a while."};
+			case Profit: {name: "Profit", text: "Unlimits your bet amount, letting you bet further than what you have."};
 		}
 	}
 
@@ -382,6 +384,10 @@ class PlayState extends BackgrndState
 			case Intimidation:
 				table.armForcedFold(1 - table.localSeat);
 				addHistoryText("Intimidation readied: opponent folds next turn!");
+
+			case Profit:
+				table.isRaiseBttnCapped = false;
+				addHistoryText('Raise limit for betting has been removed!');
 		}
 	}
 
@@ -411,7 +417,7 @@ class PlayState extends BackgrndState
 	function onDeal()
 	{
 		addHistoryText("New hand dealt.");
-		FlxG.sound.play('assets/sounds/shuffle${FlxG.random.int(1,3)}.wav').play();
+		AudioUtil.playSound('assets/sounds/shuffle${FlxG.random.int(1,3)}.wav');
 
 		handStartChips = localPlayer.chips;
 		localFolded = false;
@@ -472,7 +478,7 @@ class PlayState extends BackgrndState
 
 		card.y = restY - 400;
 		FlxTween.tween(card, { y: restY }, 0.4, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
-			FlxG.sound.play('assets/sounds/drop.wav').play();
+			AudioUtil.playSound('assets/sounds/drop.wav');
 			card.reveal(data, false);
 		}});
 
@@ -494,6 +500,10 @@ class PlayState extends BackgrndState
 
 		alphalessColorTween(squa, targetColor);
 		alphalessColorTween(glow, targetColor);
+
+		// only lets u uncap 1 turn at a time
+		if (!table.isRaiseBttnCapped)
+			table.isRaiseBttnCapped = true;
 
 		if (table.players[seat].isBot)
 			dealerSprites[seat]?.think();
@@ -576,7 +586,7 @@ class PlayState extends BackgrndState
 		var localWon = results.filter(r -> r.seat == table.localSeat).length > 0;
 		var amountLost = handStartChips - localPlayer.chips;
 
-		if (!localWon && !localFolded && amountLost > 125)
+		if (!localWon && !localFolded && amountLost > 75) // was 125 but lowered it because you rarely get more than 1 item ingame
 			grantRandomItem();
 	}
 
@@ -586,7 +596,7 @@ class PlayState extends BackgrndState
 		if (emptySlots.length == 0)
 			return;
 
-		var items = [DesignManual, Calculator, Marker, GoldenBullet, Intimidation];
+		var items = [DesignManual, Calculator, Marker, GoldenBullet, Intimidation, Profit];
 		var card = emptySlots[0];
 		card.setItem(FlxG.random.getObject(items));
 
@@ -622,8 +632,8 @@ class PlayState extends BackgrndState
 			{
 				if (playerWon)
 				{
-					FlxTween.tween(MusicManager.gameMusic, {volume: 0}, 1.5);
-					FlxTimer.wait(0.5, () -> FlxG.sound.play("assets/sounds/win.wav").play());
+					FlxTween.tween(AudioUtil.gameMusic, {volume: 0}, 1.5);
+					FlxTimer.wait(0.5, () -> AudioUtil.playSound("assets/sounds/win.wav"));
 
 					for (s in dealerSprites)
 					{
@@ -632,10 +642,10 @@ class PlayState extends BackgrndState
 
 						s?.preLose();
 						FlxTimer.wait(2.5, () -> {
-							FlxG.sound.play("assets/sounds/Shotgun Reload.wav").play();
+							AudioUtil.playSound("assets/sounds/Shotgun Reload.wav");
 						});
 						FlxTimer.wait(3.2, () -> {
-							FlxG.sound.play("assets/sounds/SHOT.wav").play();
+							AudioUtil.playSound("assets/sounds/SHOT.wav");
 							s?.lose();
 						});
 					}
@@ -645,16 +655,16 @@ class PlayState extends BackgrndState
 					for (s in dealerSprites)
 						s?.win();
 
-					FlxTween.tween(MusicManager.gameMusic, {pitch: 0}, 2.5);
+					FlxTween.tween(AudioUtil.gameMusic, {pitch: 0}, 2.5);
 
 					FlxTimer.wait(4.75, () -> {
-						FlxG.sound.play("assets/sounds/SHOT.wav").play();
+						AudioUtil.playSound("assets/sounds/SHOT.wav");
 						var spr = new FlxSprite();
 						spr.makeGraphic(1,1, 0xFFFF0000);
 						spr.setGraphicSize(1280*2, 720*2);
 						spr.screenCenter();
-						MusicManager.gameMusic.volume = 0;
-						MusicManager.gameMusic.pitch = 1;
+						AudioUtil.gameMusic.volume = 0;
+						AudioUtil.gameMusic.pitch = 1;
 						insert(1000, spr);
 						FlxTween.color(spr, 0.5, 0xFFFF0000, 0xFF000000, {ease: FlxEase.quadIn});
 					});
@@ -731,8 +741,15 @@ class PlayState extends BackgrndState
 			checkCallBtn.animation.play("check");
 			callAmountText.text = "";
 		}
-
-		pendingRaiseBB = 1;
+		/*
+			target (pot) = currentBet + pendingRaiseBB × bigBlind
+			target:table.pot, currentBet:table.currentBet, bigBlind:Table.BIG_BLIND, pendingRaiseBB
+			inverted: pendingRaiseBB = target - currentBet / bigBlind
+			/ is prioritized over - , so:
+			fixed: pendingRaiseBB = (target - currentBet) / bigBlind
+			unfloated: Math.ceil(pendingRaiseBB = (target - currentBet) / bigBlind)
+		*/
+		pendingRaiseBB = Math.ceil((table.pot - table.currentBet) / Table.BIG_BLIND); // 1
 		updateRaiseAmountText();
 
 		foldBtn.visible = foldBtn.active = true;
@@ -758,6 +775,15 @@ class PlayState extends BackgrndState
 	function updateRaiseAmountText()
 	{
 		var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
+
+		if (table.isRaiseBttnCapped && target >= localPlayer.chips) { // cap raise
+			pendingRaiseBB--;
+			return;
+		}
+		if (table.pot > target) { // cap reduce
+			pendingRaiseBB++;
+			return;
+		}
 		raiseAmountText.text = '$$$target';
 	}
 }
@@ -788,4 +814,9 @@ enum PlayerItem
 		Makes the next player automatically fold their hand
 	**/
 	Intimidation;
+
+	/**
+		Lets you bet further than what you have
+	**/
+	Profit;
 }

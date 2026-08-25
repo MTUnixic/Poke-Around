@@ -16,10 +16,10 @@ class Briefcase extends FlxTypedSpriteContainer<FlxSprite>
 		briefcase = new FlxSprite(0, 0);
 		briefcase.loadGraphic('assets/images/pokuhbreifcase.png', true, 240, 120);
 		briefcase.animation.add('idle', [0], 0, false);
-		briefcase.animation.add('open', [0, 1, 2], 10, false);
-		briefcase.animation.add('close', [2, 1, 0], 10, false);
+		briefcase.animation.add('open', [0, 1, 2], 8, false);
+		briefcase.animation.add('close', [2, 1, 0], 8, false);
 		briefcase.animation.play('idle');
-		FlxTimer.wait(0.5, () -> briefcase.animation.play('open'));
+		FlxTimer.wait(0.8, () -> briefcase.animation.play('open'));
 		add(briefcase);
 	}
 

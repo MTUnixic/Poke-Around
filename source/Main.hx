@@ -1,11 +1,11 @@
 package;
 
-import backend.MusicManager;
 import flixel.FlxG;
 import flixel.FlxGame;
 import flixel.graphics.FlxGraphic;
 import menus.MainMenu;
 import openfl.display.Sprite;
+import util.AudioUtil;
 
 class Main extends Sprite
 {

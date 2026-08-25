@@ -2,6 +2,7 @@ package util;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
+import util.AudioUtil;
 import util.MouseUtil;
 
 class SpriteButtonUtil extends FlxSprite
@@ -20,7 +21,7 @@ class SpriteButtonUtil extends FlxSprite
 
 		if (MouseUtil.justClicked(this))
 		{
-			FlxG.sound.play('assets/sounds/click.wav').play();
+			AudioUtil.playSound('assets/sounds/click.wav');
 			onClick();
 		}
 	}
