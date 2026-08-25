@@ -19,6 +19,10 @@ class MouseUtil
 
     public static inline function justClicked(object:FlxBasic):Bool
 		return FlxG.mouse.overlaps(object) && FlxG.mouse.justPressed;
+
+	public static inline function isHovering(object:FlxBasic):Bool
+		return FlxG.mouse.overlaps(object);
+
 	#else
     public static inline function mouseCamera(power:Int = 24, ?zoom:Float)
 	{
@@ -26,16 +30,19 @@ class MouseUtil
 	}
 
     public static inline function isClicked(object:FlxBasic):Bool
+		return isHovering(object);
+
+    public static inline function justClicked(object:FlxBasic):Bool
 	{
-		var touches = FlxG.touches.list;
+		var touches = FlxG.touches.justStarted();
 		if (touches.length != 1)
 			return false;
 		return touches[0].overlaps(object);
 	}
 
-    public static inline function justClicked(object:FlxBasic):Bool
+	public static inline function isHovering(object:FlxBasic):Bool
 	{
-		var touches = FlxG.touches.justStarted();
+		var touches = FlxG.touches.list;
 		if (touches.length != 1)
 			return false;
 		return touches[0].overlaps(object);

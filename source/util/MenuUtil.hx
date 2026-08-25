@@ -1,5 +1,6 @@
 package util;
 
+import flixel.FlxBasic;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
@@ -17,6 +18,8 @@ class MenuUtil
     public var buttonColor:Int = FlxColor.WHITE;
     /** item related stuff **/
     public var buttonGroup:FlxTypedGroup<FlxText>;
+
+    var hoverList:Map<FlxBasic, Bool> = [];
 
     public function new(buttonList:Array<String>, buttonColor:Int = FlxColor.WHITE)
     {
@@ -39,6 +42,8 @@ class MenuUtil
 			button.screenCenter();
 			button.y += button.height * buttonGroup.length * 1.25 + 10;
 			buttonGroup.add(button);
+
+            hoverList.set(button, false);
 		}
     }
 
@@ -58,7 +63,27 @@ class MenuUtil
 
         for (item in buttonGroup)
             if (MouseUtil.justClicked(item))
+            {
+                // AudioUtil.playSound('assets/sounds/ui/click.wav');
 				confirm(item.text);
+            }
+            else
+            {
+                if (MouseUtil.isHovering(item))
+                {
+                    if (hoverList.get(item) == false)
+                    {
+                        hoverList.set(item, true);
+                        // AudioUtil.playSound('assets/sounds/ui/hover.wav');
+						item.scale.setXY(1.1);
+                    }
+                }
+                else if (hoverList.get(item) == true)
+				{
+                    hoverList.set(item, false);
+					item.scale.setXY(1);
+				}
+            }
     }
 
     inline function confirm(name:String)
