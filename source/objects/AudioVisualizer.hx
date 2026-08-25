@@ -1,11 +1,11 @@
 package objects;
 
-import backend.flixel.vis.dsp.SpectralAnalyzer;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
 import flixel.math.FlxMath;
 import flixel.util.FlxColor;
+import funkin.vis.dsp.SpectralAnalyzer;
 import lime.media.AudioSource;
 
 /** modified from FunkinCrew/funkin.vis/examples **/
