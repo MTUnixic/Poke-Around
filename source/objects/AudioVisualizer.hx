@@ -109,4 +109,10 @@ class AudioVisualizer extends FlxGroup
 
 		super.draw();
 	}
+
+	override function destroy()
+	{
+		analyzer.cleanup();
+		super.destroy();
+	}
 }
