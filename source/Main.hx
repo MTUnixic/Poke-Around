@@ -12,7 +12,7 @@ class Main extends Sprite
 	{
 		super();
 
-		addChild(new FlxGame(1280, 720, MainMenu));
+		addChild(new FlxGame(1280, 720, PreloadState));
 
 		#if FLX_MOUSE
 		final mouseGraphic = FlxGraphic.fromAssetKey("assets/images/game/pokeryouhorse.png", true, null, false);
