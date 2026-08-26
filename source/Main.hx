@@ -3,7 +3,6 @@ package;
 import flixel.FlxG;
 import flixel.FlxGame;
 import flixel.graphics.FlxGraphic;
-import menus.MainMenu;
 import openfl.display.Sprite;
 
 class Main extends Sprite

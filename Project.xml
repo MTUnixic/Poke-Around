@@ -52,6 +52,23 @@
 	<!--In case you want to use nape with flixel-->
 	<!--<haxelib name="nape-haxe4" />-->
 
+	<!-- _________________________________ ICONS ________________________________ -->
+
+	<!-- Linux -->
+	 <icon path="assets/icons/native/64.png" size="64" if="linux" />
+
+	<!-- Desktop / Native -->
+	<icon path="assets/icons/native/16.png" size="16" />
+	<icon path="assets/icons/native/32.png" size="32" />
+	<icon path="assets/icons/native/64.png" size="64" />
+	<icon path="assets/icons/native/128.png" size="128"/>
+
+	<!-- Android -->
+	<icon path="assets/icons/mobile/36.png" size="36" if="android" />
+	<icon path="assets/icons/mobile/48.png" size="48" if="android" />
+	<icon path="assets/icons/mobile/72.png" size="72" if="android" />
+	<icon path="assets/icons/mobile/96.png" size="96" if="android" />
+
 	<!-- ______________________________ Haxedefines _____________________________ -->
 
 	<!--Remove the legacy health system-->
@@ -90,12 +107,5 @@
 	<!-- Haxe 4.3.0+: Enable pretty syntax errors and stuff. -->
 	<!-- pretty (haxeflixel default), indent, classic (haxe compiler default) -->
 	<haxedef name="message.reporting" value="pretty" />
-
-	<!-- _________________________________ Custom _______________________________ -->
-
-	<icon path="assets/icons/36.png" size="36" if="android" />
-	<icon path="assets/icons/48.png" size="48" if="android" />
-	<icon path="assets/icons/72.png" size="72" if="android" />
-	<icon path="assets/icons/96.png" size="96" if="android" />
 
 </project>
