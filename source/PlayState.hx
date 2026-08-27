@@ -14,7 +14,7 @@ import objects.Briefcase;
 import objects.Card;
 import objects.DealerSprite;
 import objects.ItemCard;
-import objects.Table;
+import objects.TableManager;
 import util.AudioUtil;
 import util.CardUtil;
 import util.MouseUtil;
@@ -22,42 +22,43 @@ import util.SpriteButtonUtil;
 
 class PlayState extends BackgrndState
 {
-	static inline var ACTION_BTN_FRAME_W = 70;
-	static inline var ACTION_BTN_FRAME_H = 50;
-	static inline var ACTION_BTN_SCALE = 2.0;
-	static inline var ACTION_BTN_W = 140.0; // ACTION_BTN_FRAME_W * ACTION_BTN_SCALE
-	static inline var ACTION_BTN_H = 100.0; // ACTION_BTN_FRAME_H * ACTION_BTN_SCALE
-	static inline var ACTION_BTN_GAP = 20;
+	static inline var ACTION_BTTN_FRAME_W = 70;
+	static inline var ACTION_BTTN_FRAME_H = 50;
+	static inline var ACTION_BTTN_SCALE = 2.0;
+	static inline var ACTION_BTTN_W = 140.0; // ACTION_BTTN_FRAME_W * ACTION_BTTN_SCALE
+	static inline var ACTION_BTTN_H = 100.0; // ACTION_BTTN_FRAME_H * ACTION_BTTN_SCALE
+	static inline var ACTION_BTTN_GAP = 20;
 	static inline var ACTION_ROW_MARGIN_BOTTOM = 10;
 
-	static inline var SMALL_BTN_FRAME_W = 50;
-	static inline var SMALL_BTN_FRAME_H = 50;
-	static inline var SMALL_BTN_SCALE = 0.75;
-	static inline var SMALL_BTN_W = 37.5; // SMALL_BTN_FRAME_W * SMALL_BTN_SCALE
-	static inline var SMALL_BTN_H = 37.5; // SMALL_BTN_FRAME_H * SMALL_BTN_SCALE
+	static inline var SMALL_BTTN_FRAME_W = 50;
+	static inline var SMALL_BTTN_FRAME_H = 50;
+	static inline var SMALL_BTTN_SCALE = 0.75;
+	static inline var SMALL_BTTN_W = 37.5; // SMALL_BTTN_FRAME_W * SMALL_BTTN_SCALE
+	static inline var SMALL_BTTN_H = 37.5; // SMALL_BTTN_FRAME_H * SMALL_BTTN_SCALE
 	static inline var AMOUNT_TEXT_W = 96;
 	static inline var AMOUNT_TEXT_GAP = 10;
 
-	var table:Table;
+	var table:TableManager;
 	var localPlayer:PokerPlayer;
 
 	var holeCardSprites:Array<Card> = [];
 	var communityCardSprites:Array<Card> = [];
 
 	var potText:FlxText;
-	var chipsText:FlxText;
+	var localChipsText:FlxText;
+	var dealerChipsText:FlxText;
 	var streetText:FlxText;
 
 	var historyTexts:Array<FlxText> = [];
 
-	var foldBtn:SpriteButtonUtil;
-	var checkCallBtn:SpriteButtonUtil;
+	var foldBttn:SpriteButtonUtil;
+	var checkCallBttn:SpriteButtonUtil;
 	var callAmountText:FlxText;
 
-	var raiseMinusBtn:SpriteButtonUtil;
-	var raisePlusBtn:SpriteButtonUtil;
+	var raiseMinusBttn:SpriteButtonUtil;
+	var raisePlusBttn:SpriteButtonUtil;
 	var raiseAmountText:FlxText;
-	var raiseConfirmBtn:SpriteButtonUtil;
+	var raiseConfirmBttn:SpriteButtonUtil;
 
 	var briefcase:Briefcase;
 
@@ -65,6 +66,7 @@ class PlayState extends BackgrndState
 	var pauseButton:FlxSprite;
 
 	var dealerSprites:Array<DealerSprite> = [];
+	var dealerSeat:Int;
 
 	var timers:FlxTimerManager;
 
@@ -83,6 +85,10 @@ class PlayState extends BackgrndState
 	var cardDescrIcon:FlxSprite;
 	var cardDescrText:FlxText;
 
+	var comboNameText:FlxText;
+
+	var hoverBttns:Array<FlxSprite> = [];
+
 	override public function create()
 	{
 		super.create();
@@ -97,118 +103,128 @@ class PlayState extends BackgrndState
 		potText.color = 0xffcdf7e2;
 		add(potText);
 
-		chipsText = new FlxText(25, 60, 300, "Chips: 0", 20);
-		chipsText.color = 0xff6d2c45;
-		add(chipsText);
-
 		streetText = new FlxText(20, 20, 400, "Street: waiting", 20);
 		streetText.color = 0xff6d2c45;
 		add(streetText);
 
-		var actionRowWidth = ACTION_BTN_W * 3 + ACTION_BTN_GAP * 2;
+		localChipsText = new FlxText(20, 80, 300, "Your Chips: $0", 20);
+		localChipsText.color = 0xff71413b;
+		add(localChipsText);
+
+		dealerChipsText = new FlxText(20, 120, 300, "Dealer's Chips: $0", 20);
+		dealerChipsText.color = 0xff6d758d;
+		add(dealerChipsText);
+
+		comboNameText = new FlxText(-24, 200, 300, "(waiting for card river..)", 20);
+		comboNameText.color = 0xff6d2c45;
+		comboNameText.alignment = CENTER;
+		comboNameText.alpha = 0.6;
+		add(comboNameText);
+
+		var actionRowWidth = ACTION_BTTN_W * 3 + ACTION_BTTN_GAP * 2;
 		var actionRowX = (FlxG.width - actionRowWidth) / 2;
-		var actionRowY = FlxG.height - ACTION_BTN_H - ACTION_ROW_MARGIN_BOTTOM;
-		var amountRowY = actionRowY - SMALL_BTN_H - AMOUNT_TEXT_GAP;
+		var actionRowY = FlxG.height - ACTION_BTTN_H - ACTION_ROW_MARGIN_BOTTOM;
+		var amountRowY = actionRowY - SMALL_BTTN_H - AMOUNT_TEXT_GAP;
 
 		var foldX = actionRowX;
-		var checkCallX = actionRowX + ACTION_BTN_W + ACTION_BTN_GAP;
-		var raiseConfirmX = actionRowX + (ACTION_BTN_W + ACTION_BTN_GAP) * 2;
+		var checkCallX = actionRowX + ACTION_BTTN_W + ACTION_BTTN_GAP;
+		var raiseConfirmX = actionRowX + (ACTION_BTTN_W + ACTION_BTTN_GAP) * 2;
 
-		foldBtn = new SpriteButtonUtil(foldX, actionRowY, null, () ->
+		foldBttn = new SpriteButtonUtil(foldX, actionRowY, null, () ->
 		{
 			disableActionButtons();
 			if (!table.handleAction(table.localSeat, Fold))
 				enableHumanActionButtons();
 		});
-		foldBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
-		foldBtn.animation.add("button", [1]);
-		foldBtn.animation.play("button");
-		foldBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
-		foldBtn.updateHitbox();
-		add(foldBtn);
+		foldBttn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTTN_FRAME_W, ACTION_BTTN_FRAME_H);
+		foldBttn.animation.add("button", [1]);
+		foldBttn.animation.play("button");
+		foldBttn.setGraphicSize(Std.int(ACTION_BTTN_W), Std.int(ACTION_BTTN_H));
+		foldBttn.updateHitbox();
+		add(foldBttn);
 
-		checkCallBtn = new SpriteButtonUtil(checkCallX, actionRowY, null, () ->
+		checkCallBttn = new SpriteButtonUtil(checkCallX, actionRowY, null, () ->
 		{
 			disableActionButtons();
 			var action = (table.currentBet - localPlayer.currentBet) > 0 ? Call : Check;
 			if (!table.handleAction(table.localSeat, action))
 				enableHumanActionButtons();
 		});
-		checkCallBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
-		checkCallBtn.animation.add("call", [0]);
-		checkCallBtn.animation.add("check", [3]);
-		checkCallBtn.animation.play("check");
-		checkCallBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
-		checkCallBtn.updateHitbox();
-		add(checkCallBtn);
+		checkCallBttn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTTN_FRAME_W, ACTION_BTTN_FRAME_H);
+		checkCallBttn.animation.add("call", [0]);
+		checkCallBttn.animation.add("check", [3]);
+		checkCallBttn.animation.play("check");
+		checkCallBttn.setGraphicSize(Std.int(ACTION_BTTN_W), Std.int(ACTION_BTTN_H));
+		checkCallBttn.updateHitbox();
+		add(checkCallBttn);
 
-		callAmountText = new FlxText(checkCallX + ACTION_BTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "", 24);
+		callAmountText = new FlxText(checkCallX + ACTION_BTTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "", 24);
 		callAmountText.alignment = CENTER;
-		callAmountText.y = amountRowY + (SMALL_BTN_H - callAmountText.height) / 2;
+		callAmountText.y = amountRowY + (SMALL_BTTN_H - callAmountText.height) / 2;
 		add(callAmountText);
 
-		raiseAmountText = new FlxText(raiseConfirmX + ACTION_BTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "$0", 24);
+		raiseAmountText = new FlxText(raiseConfirmX + ACTION_BTTN_W / 2 - AMOUNT_TEXT_W / 2, 0, AMOUNT_TEXT_W, "$0", 24);
 		raiseAmountText.alignment = CENTER;
-		raiseAmountText.y = amountRowY + (SMALL_BTN_H - raiseAmountText.height) / 2;
+		raiseAmountText.y = amountRowY + (SMALL_BTTN_H - raiseAmountText.height) / 2;
 
-		raiseMinusBtn = new SpriteButtonUtil(raiseAmountText.x - SMALL_BTN_W - AMOUNT_TEXT_GAP, amountRowY, null, () ->
+		raiseMinusBttn = new SpriteButtonUtil(raiseAmountText.x - SMALL_BTTN_W - AMOUNT_TEXT_GAP, amountRowY, null, () ->
 		{
 			if (pendingRaiseBB > 1)
 				pendingRaiseBB--;
 			updateRaiseAmountText();
 		});
-		raiseMinusBtn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTN_FRAME_W, SMALL_BTN_FRAME_H);
-		raiseMinusBtn.animation.add("button", [0]);
-		raiseMinusBtn.animation.play("button");
-		raiseMinusBtn.setGraphicSize(Std.int(SMALL_BTN_W), Std.int(SMALL_BTN_H));
-		raiseMinusBtn.updateHitbox();
-		add(raiseMinusBtn);
+		raiseMinusBttn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTTN_FRAME_W, SMALL_BTTN_FRAME_H);
+		raiseMinusBttn.animation.add("button", [0]);
+		raiseMinusBttn.animation.play("button");
+		raiseMinusBttn.setGraphicSize(Std.int(SMALL_BTTN_W), Std.int(SMALL_BTTN_H));
+		raiseMinusBttn.updateHitbox();
+		add(raiseMinusBttn);
 
 		add(raiseAmountText);
 
-		raisePlusBtn = new SpriteButtonUtil(raiseAmountText.x + AMOUNT_TEXT_W + AMOUNT_TEXT_GAP, amountRowY, null, () ->
+		raisePlusBttn = new SpriteButtonUtil(raiseAmountText.x + AMOUNT_TEXT_W + AMOUNT_TEXT_GAP, amountRowY, null, () ->
 		{
 			pendingRaiseBB++;
 			updateRaiseAmountText();
 		});
-		raisePlusBtn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTN_FRAME_W, SMALL_BTN_FRAME_H);
-		raisePlusBtn.animation.add("button", [1]);
-		raisePlusBtn.animation.play("button");
-		raisePlusBtn.setGraphicSize(Std.int(SMALL_BTN_W), Std.int(SMALL_BTN_H));
-		raisePlusBtn.updateHitbox();
-		add(raisePlusBtn);
+		raisePlusBttn.loadGraphic("assets/images/pokuhbuttonssmall.png", true, SMALL_BTTN_FRAME_W, SMALL_BTTN_FRAME_H);
+		raisePlusBttn.animation.add("button", [1]);
+		raisePlusBttn.animation.play("button");
+		raisePlusBttn.setGraphicSize(Std.int(SMALL_BTTN_W), Std.int(SMALL_BTTN_H));
+		raisePlusBttn.updateHitbox();
+		add(raisePlusBttn);
 
-		raiseConfirmBtn = new SpriteButtonUtil(raiseConfirmX, actionRowY, null, () ->
+		raiseConfirmBttn = new SpriteButtonUtil(raiseConfirmX, actionRowY, null, () ->
 		{
 			disableActionButtons();
-			var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
+			var target = table.currentBet + pendingRaiseBB * TableManager.BIG_BLIND;
 			var action = table.currentBet > 0 ? Raise(target) : Bet(target);
 			if (!table.handleAction(table.localSeat, action))
 				enableHumanActionButtons();
 		});
-		raiseConfirmBtn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTN_FRAME_W, ACTION_BTN_FRAME_H);
-		raiseConfirmBtn.animation.add("bet", [2]);
-		raiseConfirmBtn.animation.add("raise", [4]); // TODO: make functionality for bet and raise pls -MT
-		raiseConfirmBtn.animation.play("bet");
-		raiseConfirmBtn.setGraphicSize(Std.int(ACTION_BTN_W), Std.int(ACTION_BTN_H));
-		raiseConfirmBtn.updateHitbox();
-		add(raiseConfirmBtn);
+		raiseConfirmBttn.loadGraphic("assets/images/pokuhbuttons.png", true, ACTION_BTTN_FRAME_W, ACTION_BTTN_FRAME_H);
+		raiseConfirmBttn.animation.add("bet", [2]);
+		raiseConfirmBttn.animation.add("raise", [4]); // TODO: make functionality for bet and raise pls -MT
+		raiseConfirmBttn.animation.play("bet");
+		raiseConfirmBttn.setGraphicSize(Std.int(ACTION_BTTN_W), Std.int(ACTION_BTTN_H));
+		raiseConfirmBttn.updateHitbox();
+		add(raiseConfirmBttn);
 
 		disableActionButtons();
 
 		briefcase = new Briefcase(FlxG.width-240, FlxG.height-60);
 		add(briefcase);
 
-		table = new Table();
+		table = new TableManager();
 		table.timerManager = timers;
 
 		table.addPlayer("Player", Local);
-		var dealerIndex = table.addPlayer("Dealer", Bot);
+		dealerSeat = table.addPlayer("Dealer", Bot);
 
 		var botPlayer = new DealerSprite();
 		botPlayer.x = FlxG.width/2 - botPlayer.width/2;
 		botPlayer.y = 70;
-		dealerSprites[dealerIndex] = botPlayer;
+		dealerSprites[dealerSeat] = botPlayer;
 		insert(90, botPlayer);
 
 		localPlayer = table.players[table.localSeat];
@@ -236,9 +252,9 @@ class PlayState extends BackgrndState
 		cardDescrIcon = new FlxSprite();
 
 		cardDescrIcon.loadGraphic("assets/images/pokuhcaards.png", true, 64, 80);
-		cardDescrIcon.animation.add("DesignManual", [1]);
-		cardDescrIcon.animation.add("Calculator", [2]);
-		cardDescrIcon.animation.add("Marker", [3]);
+		cardDescrIcon.animation.add("ForeSight", [1]);
+		cardDescrIcon.animation.add("Debt", [2]);
+		cardDescrIcon.animation.add("Strengthener", [3]);
 		cardDescrIcon.animation.add("GoldenBullet", [4]);
 		cardDescrIcon.animation.add("Intimidation", [5]);
 		cardDescrIcon.animation.add("Profit", [6]);
@@ -267,6 +283,15 @@ class PlayState extends BackgrndState
 		pauseButton.animation.play("button");
 		pauseButton.x = FlxG.width - pauseButton.width - 8;
 		add(pauseButton);
+
+		hoverBttns = [
+			foldBttn,
+			checkCallBttn,
+			raiseMinusBttn,
+			raisePlusBttn,
+			raiseConfirmBttn,
+			pauseButton
+		];
 	}
 
 	override public function update(elapsed:Float)
@@ -276,6 +301,19 @@ class PlayState extends BackgrndState
 		#if (debug && FLX_KEYBOARD)
 		if (FlxG.keys.justPressed.NINE)
 			grantRandomItem();
+		#end
+
+		#if FLX_MOUSE
+		for (bttn in hoverBttns)
+		{
+			if (bttn == null)
+				continue;
+
+			if (MouseUtil.isHovering(bttn))
+				bttn.alpha = 1.0;
+			else
+				bttn.alpha = 0.75;
+		}
 		#end
 
 		MouseUtil.mouseCamera(36, 1.025);
@@ -350,9 +388,9 @@ class PlayState extends BackgrndState
 	{
 		return switch (item)
 		{
-			case DesignManual: {name: "DesignManual", text: "You inspect the design manual for this game. It reveals the next 3 community cards."};
-			case Calculator: {name: "Calculator", text: "Increases your opponent's dept, focing them to bet double. High risk, high reward."};
-			case Marker: {name: "Marker", text: "You use a magic marker to change the type of your weakest hole card with the strongest card from your opponent's hand."};
+			case ForeSight: {name: "ForeSight", text: "You gain foresight of this round. It reveals the next 3 community cards."};
+			case Debt: {name: "Debt", text: "Increases your opponent's debt, focing them to bet double. High risk, high reward."};
+			case Strengthener: {name: "Strengthener", text: "Strengthens your weakest hole card by mimicing the strongest card from your opponent's hand."};
 			case GoldenBullet: {name: "GoldenBullet", text: "Your life flash before your eyes, as you get saved from elimination with 125 extra chips. Wasted if unused, plan carefully."};
 			case Intimidation: {name: "Intimidation", text: "You cock your pistol from your back pouch, your opponent backs off for a while."};
 			case Profit: {name: "Profit", text: "Unlimits your bet amount, letting you bet further than what you have."};
@@ -363,15 +401,15 @@ class PlayState extends BackgrndState
 	{
 		switch (item)
 		{
-			case DesignManual:
+			case ForeSight:
 				var nextCards = table.peekNextCards(3);
 				openSubState(new CardsRevealScreen(nextCards));
 
-			case Calculator:
+			case Debt:
 				table.armDoubleMinRaise();
-				addHistoryText("Calculator readied: next raise must be doubled!");
+				addHistoryText("Debt readied: next raise must be doubled!");
 
-			case Marker:
+			case Strengthener:
 				var swap = table.replaceWeakestHoleCard(table.localSeat);
 				if (swap != null)
 				{
@@ -486,6 +524,11 @@ class PlayState extends BackgrndState
 		}});
 
 		streetText.text = 'Street: ${table.street}';
+
+		if (localPlayer.holeCards.length + table.community.length >= 7) {
+			comboNameText.text = CardUtil.formatCombo(CardUtil.bestHandOf7(localPlayer.holeCards.concat(table.community)));
+			comboNameText.alpha = 1.0;
+		}
 	}
 
 	function onPotChanged()
@@ -582,16 +625,19 @@ class PlayState extends BackgrndState
 	function onShowdown(results:Array<ShowdownResult>)
 	{
 		disableActionButtons();
-		if (results.length == 0)
+		
+		if (results.length == 0) {
 			addHistoryText("Hand over.");
-		else
-			for (r in results)
-				addHistoryText('${r.name} wins $$${r.winnings} (${r.handText})');
+		} else if (results.length > 1) {
+			addHistoryText('Tie!');
+		} else for (r in results) {
+			addHistoryText('${r.name} wins $$${r.winnings} (${r.handText})');
+		}
 
-		var localWon = results.filter(r -> r.seat == table.localSeat).length > 0;
+		var localWon = results.filter(r -> r.seat == table.localSeat).length > 0; // find if localplayer is the winner of this hand/round
 		var amountLost = handStartChips - localPlayer.chips;
 
-		if (!localWon && !localFolded && amountLost > 75) // was 125 but lowered it because you rarely get more than 1 item ingame
+		if (localWon && !localFolded) // before it only gaev u item if didnt win and didnt fold and you lost like 75 of your chips, now it rewards you for winning and not folding which i think is fair and also fixes the items too rare issue -MT
 			grantRandomItem();
 	}
 
@@ -601,7 +647,7 @@ class PlayState extends BackgrndState
 		if (emptySlots.length == 0)
 			return;
 
-		var items = [DesignManual, Calculator, Marker, GoldenBullet, Intimidation, Profit];
+		var items = [ForeSight, Debt, Strengthener, GoldenBullet, Intimidation, Profit];
 		var card = emptySlots[0];
 		card.setItem(FlxG.random.getObject(items));
 
@@ -631,9 +677,9 @@ class PlayState extends BackgrndState
 
 			var opponent = table.players[1 - table.localSeat];
 			var playerWon = opponent.chips <= 0 || localPlayer.chips >= 2400;
-			var playerLost = localPlayer.chips <= 0 || opponent.chips >= 2400;
+			var dealerWon = localPlayer.chips <= 0 || opponent.chips >= 2400;
 
-			if (playerWon || playerLost)
+			if (playerWon != dealerWon) // only one side won
 			{
 				if (playerWon)
 				{
@@ -678,7 +724,15 @@ class PlayState extends BackgrndState
 				openSubState(new GameOverSubState(playerWon));
 			}
 			else
-				table.startHand();
+			{
+				comboNameText.text = "(waiting for card river..)";
+				comboNameText.alpha = 0.6;
+
+				if ((playerWon && dealerWon) || (!playerWon || !dealerWon)) // both win or both lose
+					table.startHand(); // dummy template, do whatever u want here
+				else
+					table.startHand();
+			}
 		});
 	}
 
@@ -704,7 +758,8 @@ class PlayState extends BackgrndState
 
 	function refreshChipsText()
 	{
-		chipsText.text = 'Chips: ${localPlayer.chips}';
+		localChipsText.text = 'Your Chips: $$${localPlayer.chips}';
+		dealerChipsText.text = 'Dealer\'s Chips: $$${table.players[dealerSeat].chips}';
 	}
 
 	function addHistoryText(msg:String)
@@ -738,12 +793,12 @@ class PlayState extends BackgrndState
 		var toCall = table.currentBet - localPlayer.currentBet;
 		if (toCall > 0)
 		{
-			checkCallBtn.animation.play("call");
+			checkCallBttn.animation.play("call");
 			callAmountText.text = '$$$toCall';
 		}
 		else
 		{
-			checkCallBtn.animation.play("check");
+			checkCallBttn.animation.play("check");
 			callAmountText.text = "";
 		}
 		/*
@@ -754,34 +809,35 @@ class PlayState extends BackgrndState
 			fixed: pendingRaiseBB = (target - currentBet) / bigBlind
 			unfloated: Math.ceil(pendingRaiseBB = (target - currentBet) / bigBlind)
 		*/
-		pendingRaiseBB = Math.ceil((table.pot - table.currentBet) / Table.BIG_BLIND); // 1
+		pendingRaiseBB = Math.ceil((table.pot - table.currentBet) / TableManager.BIG_BLIND); // 1
 		updateRaiseAmountText();
 
-		foldBtn.visible = foldBtn.active = true;
-		checkCallBtn.visible = checkCallBtn.active = true;
+		foldBttn.visible = foldBttn.active = true;
+		checkCallBttn.visible = checkCallBttn.active = true;
 		callAmountText.visible = true;
-		raiseMinusBtn.visible = raiseMinusBtn.active = true;
-		raisePlusBtn.visible = raisePlusBtn.active = true;
-		raiseConfirmBtn.visible = raiseConfirmBtn.active = true;
+		raiseMinusBttn.visible = raiseMinusBttn.active = true;
+		raisePlusBttn.visible = raisePlusBttn.active = true;
+		raiseConfirmBttn.visible = raiseConfirmBttn.active = true;
 		raiseAmountText.visible = true;
 	}
 
 	function disableActionButtons()
 	{
-		foldBtn.visible = foldBtn.active = false;
-		checkCallBtn.visible = checkCallBtn.active = false;
+		foldBttn.visible = foldBttn.active = false;
+		checkCallBttn.visible = checkCallBttn.active = false;
 		callAmountText.visible = false;
-		raiseMinusBtn.visible = raiseMinusBtn.active = false;
-		raisePlusBtn.visible = raisePlusBtn.active = false;
-		raiseConfirmBtn.visible = raiseConfirmBtn.active = false;
+		raiseMinusBttn.visible = raiseMinusBttn.active = false;
+		raisePlusBttn.visible = raisePlusBttn.active = false;
+		raiseConfirmBttn.visible = raiseConfirmBttn.active = false;
 		raiseAmountText.visible = false;
 	}
 
 	function updateRaiseAmountText()
 	{
-		var target = table.currentBet + pendingRaiseBB * Table.BIG_BLIND;
+		var target = table.currentBet + pendingRaiseBB * TableManager.BIG_BLIND;
+		var maxRaise = localPlayer.currentBet + localPlayer.chips; // how much we have = whats left + how much we bet/use
 
-		if (table.isRaiseBttnCapped && target >= localPlayer.chips) { // cap raise
+		if (table.isRaiseBttnCapped && target > maxRaise) { // cap raise
 			pendingRaiseBB--;
 			return;
 		}
@@ -798,17 +854,17 @@ enum PlayerItem
 	/**
 		Reveals the next 3 community cards
 	**/
-	DesignManual;
+	ForeSight;
 
 	/**
 		The next player must raise the bet to at least double the previous raise (or 20)
 	**/
-	Calculator;
+	Debt;
 
 	/**
 		Replaces your weakest card with the strongest card present in the current hand
 	**/
-	Marker;
+	Strengthener;
 
 	/**
 		saves you from elimination by giving you 125 extra chips upon losing all credits, but only works if you lose to the current round, next round will be useless

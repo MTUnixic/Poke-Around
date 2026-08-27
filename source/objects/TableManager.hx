@@ -43,7 +43,13 @@ typedef ShowdownResult =
 	winnings:Int,
 }
 
-enum PlayerKind
+private typedef OneMove = {
+	var count:Int;
+	var actionList:Array<PlayerAction>;
+	var isStrong:Bool;
+}
+
+private enum PlayerKind
 {
 	Local;
 	Bot;
@@ -55,7 +61,7 @@ enum PlayerKind
  * Knows nothing about rendering or input widgets; callers drive it via `handleAction()`
  * and observe state changes through the `on*` hooks below.
  */
-class Table
+class TableManager
 {
 	public static inline var SMALL_BLIND = 10;
 	public static inline var BIG_BLIND = 20;
@@ -84,6 +90,8 @@ class Table
 
 	public var isRaiseBttnCapped = true;
 
+	var moveCount:Array<OneMove> = []; // how many times guy[x] did something
+
 	public dynamic function onDeal():Void {}
 	public dynamic function onCommunityCard(data:CardData, index:Int):Void {}
 	public dynamic function onPotChanged():Void {}
@@ -94,13 +102,38 @@ class Table
 
 	public function new() {}
 
+	/**
+		initializes a player (local or bot) and pushes it to the players' list
+		@param name player identifier
+		@param playerKind what kind of player is added (Bot/Local/Opponent)
+		@return the current seat index of player (optional: for convenience)
+	**/
 	public function addPlayer(name:String, playerKind:PlayerKind = Bot):Int
 	{
 		var seat = players.length;
-		players.push({name: name, isBot: playerKind.match(Bot), chips: STARTING_CHIPS, currentBet: 0, folded: false, isAllIn: false, holeCards: [], isOut: false});
+
+		players.push({
+			name: name,
+			isBot: playerKind.match(Bot),
+			chips: STARTING_CHIPS,
+			currentBet: 0,
+			folded: false,
+			isAllIn: false,
+			holeCards: [],
+			isOut: false
+		});
+
+		moveCount.push({
+			isStrong: false,
+			actionList: [],
+			count: 0
+		});
+
 		if (playerKind.match(Local))
 			localSeat = seat;
-		dealerSeat = seat;
+		else 
+			dealerSeat = seat;
+
 		return seat;
 	}
 
@@ -116,12 +149,11 @@ class Table
 	public function peekNextCards(count:Int):Array<CardData>
 	{
 		var result:Array<CardData> = [];
-		var i = deck.length - 1;
-		while (result.length < count && i >= 0)
-		{
+		var i = deck.length;
+
+		while (result.length < count && --i >= 0) // cool haxe trick you can do instead of i--; at the second line
 			result.push(deck[i]);
-			i--;
-		}
+
 		return result;
 	}
 
@@ -201,11 +233,18 @@ class Table
 
 	public function handleAction(seat:Int, action:PlayerAction):Bool
 	{
+		final moves = moveCount[seat];
+
+		moves.count++;
+
 		if (seat != turnSeat)
 			return false;
 		var p = players[seat];
 		if (p.folded || p.isAllIn)
 			return false;
+
+		if (p.holeCards.length + community.length >= 7)// fixes NOR since community cards didnt spawn yet // (community.length > 0) aint it it crashes with NOR after round end
+			moves.isStrong = CardUtil.bestHandOf7(p.holeCards.concat(community)).rank >= 3; // your cards + table cards // 3 means three of a kind so a TOAK or a better is considered strong enough
 
 		var minRaiseMultiplier = doubleMinRaiseArmed ? 2 : 1;
 		doubleMinRaiseArmed = false;
@@ -215,6 +254,8 @@ class Table
 			forcedFoldSeat = -1;
 			action = Fold;
 		}
+
+		moves.actionList.push(action);
 
 		switch (action)
 		{
@@ -254,6 +295,14 @@ class Table
 
 		advanceTurn();
 		return true;
+	}
+
+	/** rate of how often the player checks from 0-1 **/
+	inline function checkPassiveRate(seat:Int):Float
+	{
+		if (moveCount[seat].count == 0)
+			return 0;
+		return moveCount[seat].actionList.filter(f -> f.match(Check) || f.match(Call)).length / moveCount[seat].count; // filter checks from actionList find its length and divide it by player move count
 	}
 
 	public static function actionLabel(action:PlayerAction):String
@@ -296,15 +345,16 @@ class Table
 	}
 
 	/**
-	 * Monte Carlo win probability for `seat`'s hand: deals random plausible hole cards for
-	 * every live opponent plus the remaining community cards over many trials, and returns
-	 * the fraction of the pot `seat` would win on average (ties split). Works unchanged from
-	 * preflop (samples all 5 community cards) through the river (samples none).
-	 *
-	 * Replaces a flawed hand-category-only score that rated any single pair as ~11% strength
-	 * (rank 1 / 9) and unmade draws as 0%, which made the bot fold strong made hands and
-	 * well-priced draws far too often, and check/call instead of betting them for value.
-	 */
+		Monte Carlo win probability for `seat`'s hand: deals random plausible hole cards for
+		every live opponent plus the remaining community cards over many trials, and returns
+		the fraction of the pot `seat` would win on average (ties split). Works unchanged from
+		preflop (samples all 5 community cards) through the river (samples none).
+
+		Replaces a flawed hand-category-only score that rated any single pair as ~11% strength
+		(rank 1 / 9) and unmade draws as 0%, which made the bot fold strong made hands and
+		well-priced draws far too often, and check/call instead of betting them for value.
+		@returns range between 0.0 and 1.0
+	**/
 	function handEquity(seat:Int, trials:Int = 200):Float
 	{
 		var me = players[seat];
@@ -393,6 +443,16 @@ class Table
 		if (toCall <= 0)
 		{
 			var betChance = bluff ? 0.5 : strength * 0.9;
+
+			if (checkPassiveRate(seat) > 0.7) // prevents cheat/hack of just spamming check to autowin
+			{
+				final isCooked = moveCount[seat].isStrong;
+
+				if (!isCooked) betChance += 0.2; // attack his passive ahh
+				else betChance -= 0.15; // maybe dont attack as much
+			}
+			betChance = Math.min(betChance, 1.0);
+
 			if (Math.random() >= betChance)
 				return Check;
 
@@ -407,10 +467,15 @@ class Table
 		if (!bluff && strength < potOdds * 1.05)
 			return Fold;
 
-		if (bluff || strength > 0.7)
+		if (bluff || strength > 0.6) // made the dealer care about how much he has instead of gambling the moment his cards are good -MT
 		{
 			var raiseSize = BIG_BLIND + Std.int((0.5 + strength) * BIG_BLIND * 3);
-			return Raise(currentBet + raiseSize);
+
+			if (strength >= 0.8) raiseSize = p.chips; // go all in
+			else if (strength >= 0.6) raiseSize = Std.int(p.chips / 2); // be more careful and bet half of your chips
+			else raiseSize = Std.int(Math.min(raiseSize, p.chips / 2)); // be cautious and don't bet more than half
+
+			return Raise(raiseSize);
 		}
 
 		return Call;
@@ -645,10 +710,10 @@ class Table
 		var contenders = [for (i in 0...players.length) if (!players[i].folded) i];
 		var results = [
 			for (seat in contenders)
-				{seat: seat, rank: CardUtil.bestHandOf7(players[seat].holeCards.concat(community))}
+				{seat: seat, rank: CardUtil.bestHandOf7(players[seat].holeCards.concat(community))} // how many cards the player has + how many cards are there on the table => used to find the best hands of these cards
 		];
 
-		results.sort((a, b) ->
+		results.sort((a, b) -> // sorts all players from best to worst (by checking the difference in signs and using it to decide if a should go before b or if b should go before a)
 		{
 			if (a.rank.rank != b.rank.rank)
 				return b.rank.rank - a.rank.rank;
@@ -657,11 +722,15 @@ class Table
 			return b.rank.num2 - a.rank.num2;
 		});
 
-		var best = results[0].rank;
-		var winners = results.filter(r -> r.rank.rank == best.rank && r.rank.num1 == best.num1 && r.rank.num2 == best.num2);
+		var best = results[0].rank; // since results is best to worst, the best is the first item on the list
+		var winners = results.filter(r -> // find anyone matching the best player, allows a tie though
+			r.rank.rank == best.rank
+			&& r.rank.num1 == best.num1
+			&& r.rank.num2 == best.num2
+		);
 
-		var share = Std.int(pot / winners.length);
-		var remainder = pot - share * winners.length;
+		var share = Std.int(pot / winners.length); // already helps me when i tie, it already shares the pot equally to all players
+		var remainder = pot % winners.length; // modulo exists gng -MT
 
 		var showdownResults:Array<ShowdownResult> = [];
 		for (i in 0...winners.length)

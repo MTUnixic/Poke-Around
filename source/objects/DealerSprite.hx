@@ -56,12 +56,11 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 	function postAnim(animName:String)
 	{
 		cancelTimer();
-		postAnimTimer = FlxTimer.wait(sprite.animation.curAnim.frameDuration * sprite.animation.curAnim.frames.length, () ->
+
+		sprite.animation.onFinish.add(function (name)
 		{
-			var anim = sprite.animation.getByName(animName);
-			if (anim == null)
-				return;
-			sprite.animation.play(animName);
+			if (!sprite.animation.getByName(name).looped) // let the animation continue if it isnt looping
+				sprite.animation.play(animName);
 		});
 	}
 
@@ -105,7 +104,8 @@ class DealerSprite extends FlxTypedSpriteContainer<FlxSprite>
 			spawnHint('ALL IN WITH $$${target}!');
 			
 			AudioUtil.playSound('assets/sounds/Ya.wav');
-			FlxTimer.wait(1.0, () -> {
+			
+			FlxTimer.wait(0.5, () -> {
 				FlxG.camera.shake(0.02, 0.2);
 				AudioUtil.playSound('assets/sounds/slam.wav');
 			});

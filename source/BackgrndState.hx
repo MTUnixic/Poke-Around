@@ -69,10 +69,13 @@ class BackgrndState extends FlxTransitionableState
 
         visualizer = new AudioVisualizer(music, 32);
 
-        for (bar in visualizer.barGroup.members)
+        for (bar in visualizer.barGroup.members) {
             bar.scrollFactor.setXY(0.5);
-        for (peak in visualizer.peakLines.members)
+            bar.alpha = 0.0;
+        } for (peak in visualizer.peakLines.members) {
             peak.scrollFactor.setXY(0.5);
+            peak.alpha = 0.0;
+        }
 
 		insert(1, visualizer);
     }

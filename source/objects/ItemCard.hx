@@ -17,14 +17,14 @@ class ItemCard extends FlxThreeSprite
 		super(x, y);
 
 		loadGraphic("assets/images/pokuhcaards.png", true, 64, 80);
-		animation.add("empty", [0]);
-		animation.add("DesignManual", [1]);
-		animation.add("Calculator", [2]);
-		animation.add("Marker", [3]);
+		animation.add("EMP", [0]);
+		animation.add("ForeSight", [1]);
+		animation.add("Debt", [2]);
+		animation.add("Strengthener", [3]);
 		animation.add("GoldenBullet", [4]);
 		animation.add("Intimidation", [5]);
 		animation.add("Profit", [6]);
-		animation.play("empty");
+		animation.play("EMP");
 		setGraphicSize(width / 1.5, height / 1.5);
 		updateHitbox();
 	}
@@ -49,6 +49,6 @@ class ItemCard extends FlxThreeSprite
 	public function use()
 	{
 		value = null;
-		animation.play("empty");
+		animation.play("EMP");
 	}
 }

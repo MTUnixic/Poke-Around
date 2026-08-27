@@ -8,6 +8,12 @@ typedef CardData =
 	suit:Int,
 }
 
+private typedef CardCombo = {
+	var rank:Int;
+	var num1:Int;
+	var num2:Int;
+}
+
 class CardUtil
 {
 	static var cardPool:Pool<CardData> =
@@ -19,9 +25,10 @@ class CardUtil
 			p;
 		};
 
+	/** an array of CardData (with their nums and suits) **/
 	public static var cards:Array<CardData> = [];
 
-	// every way to choose 5 indices out of 7, used by bestHandOf7
+	/** every way to choose 5 indices out of 7, used by bestHandOf7 **/
 	static var sevenChooseFive:Array<Array<Int>> = {
 		var combos:Array<Array<Int>> = [];
 		for (a in 0...7)
@@ -36,22 +43,23 @@ class CardUtil
 	public static inline function freshShuffledDeck():Array<CardData>
 		return cardPool.getMultiple(52, true, false);
 
-	// best 5-card hand out of exactly 7 cards (e.g. 2 hole + 5 community)
-	public static function bestHandOf7(cards:Array<CardData>)
+	/** best 5-card hand out of exactly 7 cards (e.g. 2 hole + 5 community) **/
+	public static function bestHandOf7(cards:Array<CardData>):CardCombo
 	{
 		var best = {rank: -1, num1: -1, num2: -1};
 		for (combo in sevenChooseFive)
 		{
 			var hand = [for (i in combo) cards[i]];
-			var result = checkCombos(hand);
+			var result = findCombosFromCards(hand);
 			if (result.rank > best.rank
 				|| (result.rank == best.rank && result.num1 > best.num1)
-				|| (result.rank == best.rank && result.num1 == best.num1 && result.num2 > best.num2))
-				best = result;
+				|| (result.rank == best.rank && result.num1 == best.num1 && result.num2 > best.num2)
+			) best = result;
 		}
 		return best;
 	}
 
+	/** stringifies CardData into pairs (e.g. "Ace Clubs", "Queen Hearts", etc.) **/
 	public static inline function formatCard(c:CardData):String
 	{
 		var rank = switch (c.num)
@@ -72,10 +80,11 @@ class CardUtil
 		return '$rank of $suit';
 	}
 
-	public static inline function formatCombo(c:{rank:Int, num1:Int, num2:Int})
+	/** stringifies CardCombo into their names (e.g. High Card, Pair, etc.) **/
+	public static function formatCombo(c:CardCombo):String
 		return switch (c.rank)
 		{
-			default: 'High Card ${c.num1}';
+			default:'High Card ${c.num1}';
 			case 1: 'Pair ${c.num1}';
 			case 2: 'Two Pair ${c.num1},${c.num2}';
 			case 3: 'Three of a Kind ${c.num1}';
@@ -87,7 +96,8 @@ class CardUtil
 			case 9: 'Royal Flush';
 		}
 
-	public static function checkCombos(cards:Array<CardData>)
+	/** evaluates your hand and tells you what combo combination it is **/
+	public static function findCombosFromCards(cards:Array<CardData>):CardCombo
 	{
 		var result = {rank: 0, num1: 0, num2: 0};
 		var nums:Map<Int, Int> = [];
@@ -103,7 +113,7 @@ class CardUtil
 			{
 				case 1:
 					if (result.rank == 0)
-						result.num1 = num; // high card
+						result.num1 = num == 1 ? 14 : Std.int(Math.max(result.num1, num)); // high card // ace is stored as 1 so this stops it from getting neglected, and math.max stops any inferior combo from overriding any strong combos (stops high cards and such from not working at all) -MT
 				case 2:
 					if (result.rank == 0) // pair
 					{
