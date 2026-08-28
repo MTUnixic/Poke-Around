@@ -33,7 +33,10 @@ class PauseMenu extends FlxSubState
 		buttonGroup = new FlxTypedGroup<FlxText>();
 		menu.makeButtonGroup(buttonGroup);
 
-		menu.addConfirmOption('Resume', () -> close());
+		menu.addConfirmOption('Resume', () -> {
+			AudioUtil.switchToGameMusic();
+			close();
+		});
 		menu.addConfirmOption('Restart', () -> FlxG.resetState());
 		menu.addConfirmOption('Exit To Menu', () -> FlxG.switchState(() -> new MainMenu()));
 		#if !web

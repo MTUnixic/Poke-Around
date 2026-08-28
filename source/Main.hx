@@ -10,6 +10,8 @@ import flixel.graphics.FlxGraphic;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
 import flixel.util.FlxColor;
+import lime.app.Application;
+import lime.graphics.Image;
 import menus.MainMenu;
 import openfl.display.Sprite;
 class Main extends Sprite
@@ -19,6 +21,10 @@ class Main extends Sprite
 		super();
 
 		addChild(new FlxGame(1280, 720, TransitionInitializer));
+
+		#if (linux || mac) // fix the app icon not showing up on the Linux Panel / Mac Dock
+		Application.current.window.setIcon(Image.fromFile("assets/icons/native/64.png"));
+		#end
 
 		#if FLX_MOUSE
 		final mouseGraphic = FlxGraphic.fromAssetKey("assets/images/game/pokeryouhorse.png", true, null, false);

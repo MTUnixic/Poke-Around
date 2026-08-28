@@ -1,4 +1,4 @@
-# [Poke Around](https://mtunixic.itch.io/poke-around) (on itch.io)
+# [Poke-Around](https://mtunixic.itch.io/poke-around) (on itch.io)
 
 ![Screenshot](assets/images/github/pokuhitch1.png)
 
