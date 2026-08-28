@@ -649,7 +649,13 @@ class PlayState extends BackgrndState
 
 		var items = [ForeSight, Debt, Strengthener, GoldenBullet, Intimidation, Profit];
 		var card = emptySlots[0];
+		
 		card.setItem(FlxG.random.getObject(items));
+
+		var fullItems = [for (v in playerItems.filter(c -> c.value != null)) v.value];
+
+		if (fullItems.contains(card.value) && Math.random() <= 0.5)
+			card.setItem(FlxG.random.getObject(items));
 
 		#if FLX_NO_MOUSE
 		if (card.value != null)
