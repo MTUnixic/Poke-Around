@@ -60,41 +60,78 @@ class CardUtil
 	}
 
 	/** stringifies CardData into pairs (e.g. "Ace Clubs", "Queen Hearts", etc.) **/
-	public static inline function formatCard(c:CardData):String
+	public static function formatCardData(c:CardData):String
 	{
-		var rank = switch (c.num)
+		var rank = formatRank(c.num);
+		var suit = formatSuit(c.suit);
+
+		return '$rank of $suit';
+	}
+
+	static function formatRank(rank:Int, isMany = false):String
+	{
+		return switch (rank)
 		{
-			case 1: "Ace";
-			case 11: "Jack";
-			case 12: "Queen";
-			case 13: "King";
-			default: '${c.num}';
-		}
-		var suit = switch (c.suit)
+			case 1: "Ace" + (isMany? "s" : "");
+			case 11: "Jack" + (isMany? "s" : "");
+			case 12: "Queen" + (isMany? "s" : "");
+			case 13: "King" + (isMany? "s" : "");
+			default: '${formatNumbers(rank, isMany)}';
+		};
+	}
+
+	static inline function formatSuit(rank:Int):String
+	{
+		return switch (rank)
 		{
 			case 0: "Clubs";
 			case 1: "Diamonds";
 			case 2: "Hearts";
 			default: "Spades";
-		}
-		return '$rank of $suit';
+		};
+	}
+
+	static inline function formatNumbers(num:Int, isMany = false):String
+	{
+		final worded =  switch (num)
+		{
+			case 2: "Two";
+			case 3: "Three";
+			case 4: "Four";
+			case 5: "Five";
+			case 6: "Six";
+			case 7: "Seven";
+			case 8: "Eight";
+			case 9: "Nine";
+			case 10:"Ten";
+			default: "" + num;
+		};
+
+		if (!isMany) return worded;
+		if (num == 0) return worded + "es";
+
+		return worded + "s";
 	}
 
 	/** stringifies CardCombo into their names (e.g. High Card, Pair, etc.) **/
-	public static function formatCombo(c:CardCombo):String
+	public static function formatCombo(c:CardCombo):String {
+		final x = formatRank(c.num1), y = formatRank(c.num2);
+		final xs = formatRank(c.num1,true), ys = formatRank(c.num2,true);
+
 		return switch (c.rank)
 		{
-			default:'High Card ${c.num1}';
-			case 1: 'Pair ${c.num1}';
-			case 2: 'Two Pair ${c.num1},${c.num2}';
-			case 3: 'Three of a Kind ${c.num1}';
-			case 4: 'Straight ${c.num1}';
+			default:'High Card ($x)';
+			case 1: 'Pair of $xs';
+			case 2: 'Two Pairs of $xs over $ys';
+			case 3: 'Three of a Kind ($xs)';
+			case 4: '$x-high Straight';
 			case 5: 'Flush';
-			case 6: 'Full House ${c.num1},${c.num2}';
-			case 7: 'Four of a Kind ${c.num1}';
-			case 8: 'Straight Flush ${c.num1}';
+			case 6: 'Full House of $xs over $ys';
+			case 7: 'Four of a Kind ($xs)';
+			case 8: 'Straight Flush ($x)';
 			case 9: 'Royal Flush';
 		}
+	}
 
 	/** evaluates your hand and tells you what combo combination it is **/
 	public static function findCombosFromCards(cards:Array<CardData>):CardCombo

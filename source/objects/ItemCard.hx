@@ -35,12 +35,24 @@ class ItemCard extends FlxThreeSprite
 
 		var restOffsetY = offset.y;
 
+		FlxTween.cancelTweensOf(this); // duplicate prob fix
+		FlxTween.cancelTweensOf(angleY);
+
 		AudioUtil.playSound("assets/sounds/Sonic.exe Ding SFX.wav");
 
-		FlxTween.tween(offset, { y: restOffsetY + 125 }, 0.5, { ease: FlxEase.quadInOut });
-		FlxTween.tween(this, { angleY: 270 }, 0.5, { ease: FlxEase.quadIn, onComplete: function(tween:FlxTween) {
+		FlxTween.tween(offset, { y: restOffsetY + 125 }, 0.5, {
+			ease: FlxEase.quadInOut 
+		});
+
+		FlxTween.tween(this, { angleY: 270 }, 0.5, {
+			ease: FlxEase.quadIn,
+			onComplete:
+		function(tween:FlxTween)
+		{
 			animation.play(EnumValueTools.getName(item));
+
 			this.angleY = -270;
+
 			FlxTween.tween(this, { angleY: 0 }, 1, { ease: FlxEase.quadOut });
 			FlxTween.tween(this.offset, { y: restOffsetY }, 1, { ease: FlxEase.quintIn });
 		}});

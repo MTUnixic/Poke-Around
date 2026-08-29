@@ -415,7 +415,7 @@ class PlayState extends BackgrndState
 				{
 					if (holeCardSprites[swap.index] != null)
 						holeCardSprites[swap.index].reveal(swap.card, true);
-					addHistoryText('You upgrade your weakest card to ${CardUtil.formatCard(swap.card)}!');
+					addHistoryText('You upgrade your weakest card to ${CardUtil.formatCardData(swap.card)}!');
 				}
 
 			case GoldenBullet:
@@ -842,6 +842,8 @@ class PlayState extends BackgrndState
 	{
 		var target = table.currentBet + pendingRaiseBB * TableManager.BIG_BLIND;
 		var maxRaise = localPlayer.currentBet + localPlayer.chips; // how much we have = whats left + how much we bet/use
+
+		trace('localBet: ${localPlayer.currentBet}, localChips ${localPlayer.chips}, target: $target, maxRaise: $maxRaise');
 
 		if (table.isRaiseBttnCapped && target > maxRaise) { // cap raise
 			pendingRaiseBB--;

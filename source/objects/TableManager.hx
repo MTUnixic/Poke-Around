@@ -475,7 +475,7 @@ class TableManager
 			else if (strength >= 0.6) raiseSize = Std.int(p.chips / 2); // be more careful and bet half of your chips
 			else raiseSize = Std.int(Math.min(raiseSize, p.chips / 2)); // be cautious and don't bet more than half
 
-			return Raise(raiseSize);
+			return Raise(p.currentBet + raiseSize); // oops it doesnt fully go all in sorry guys -MT
 		}
 
 		return Call;
