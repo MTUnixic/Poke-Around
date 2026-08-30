@@ -1,0 +1,196 @@
+name: Build game release binaries
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Haxe 4.3.7
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: 4.3.7
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Test installs
+        run: |
+          where cl
+          cl
+          haxe --version
+          haxelib version
+
+      - name: Install libraries
+        run: |
+          haxelib install hxcpp
+          haxelib install libraries.hxml --skip-dependencies --always
+
+      - name: Build
+        run: |
+          haxelib run lime build windows -release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path export/windows/bin/* `
+            -DestinationPath PokeAround-Windows-x86_64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeAround-Windows-x86_64
+          path: PokeAround-Windows-x86_64.zip
+
+  linux:
+    name: linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Haxe 4.3.7
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: 4.3.7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            gcc \
+            g++ \
+            make
+
+      - name: Test installs
+        run: |
+          haxe --version
+          haxelib version
+
+      - name: Install libraries
+        run: |
+          haxelib install hxcpp
+          haxelib install libraries.hxml --skip-dependencies --always
+
+      - name: Build
+        run: |
+          haxelib run lime build linux -release
+
+      - name: Package
+        run: |
+          tar -czf PokeAround-Linux-x86_64.tar.gz \
+            -C export/linux/bin .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeAround-Linux-x86_64
+          path: PokeAround-Linux-x86_64.tar.gz
+
+  android:
+    name: android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28c
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Haxe 4.3.7
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: 4.3.7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            gcc \
+            g++ \
+            make \
+            unzip
+
+      - name: Test installs
+        run: |
+          haxe --version
+          haxelib version
+          java --version
+
+      - name: lime setup android
+        run: |
+          haxelib run lime config ANDROID_SDK $ANDROID_SDK_ROOT
+          haxelib run lime config ANDROID_NDK_ROOT ${{ steps.setup-ndk.outputs.ndk-path }}
+          haxelib run lime config JAVA_HOME ${{ env.JAVA_HOME }}
+          haxelib run lime config ANDROID_SETUP true
+          haxelib run lime config
+
+
+      - name: Install libraries
+        run: |
+          haxelib install hxcpp
+          haxelib install libraries.hxml --skip-dependencies --always
+
+      - name: Build
+        run: |
+          haxelib run lime build android -release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeAround-Android
+          path: export/android/bin/*.apk
+
+  release:
+    name: Upload release artifacts
+    runs-on: ubuntu-latest
+
+    needs:
+      - windows
+      - linux
+      - android
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Show artifacts
+        run: |
+          find artifacts -type f
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload \
+            "${{ github.event.release.tag_name }}" \
+            artifacts/** \
+            --clobber

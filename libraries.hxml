@@ -1,0 +1,8 @@
+-lib openfl:9.5.2
+-lib lime:8.3.2
+-lib flixel:6.2.0
+-lib flixel-addons:4.0.2
+-lib hscript:2.7.0
+-lib tink_core:1.26.0
+-lib grig.audio:git:https://github.com/FunkinCrew/grig.audio.git#57f5d47f2533fd0c3dcd025a86cb86c0dfa0b6d2
+-lib funkin.vis:git:https://github.com/Davvex87/funkVis.git#a8c7c360983a1a8740fc72f926831c21d3e24d23
